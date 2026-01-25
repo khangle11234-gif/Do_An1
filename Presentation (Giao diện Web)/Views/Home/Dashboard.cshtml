@@ -1,0 +1,80 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <title>Dashboard - Quản Lý Kho</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            background-color: #f0f2f5;
+        }
+
+        .card-menu {
+            transition: transform 0.3s;
+            cursor: pointer;
+            border: none;
+            border-radius: 15px;
+        }
+
+            .card-menu:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+            }
+
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-dark bg-primary px-4 shadow-sm">
+        <span class="navbar-brand mb-0 h1"><i class="fas fa-cubes me-2"></i> QUẢN LÝ KHO</span>
+        <div class="d-flex align-items-center text-white">
+            <span class="me-3"><i class="fas fa-user-circle"></i> Xin chào, <b>@Context.Session.GetString("HoTen")</b></span>
+            <a href="/Home/Logout" class="btn btn-danger btn-sm rounded-pill px-3">Đăng xuất</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row g-4 justify-content-center">
+
+            <div class="col-md-4">
+                <div class="card card-menu p-4 text-center text-white bg-success h-100">
+                    <div class="icon-box"><i class="fas fa-shopping-cart"></i></div>
+                    <h3>Bán Hàng (POS)</h3>
+                    <p>Tạo hóa đơn, quét mã vạch, thanh toán</p>
+                    <a href="@Url.Action("Index", "Sale")" class="stretched-link"></a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card card-menu p-4 text-center text-white bg-warning h-100">
+                    <div class="icon-box"><i class="fas fa-truck-loading"></i></div>
+                    <h3>Nhập Kho</h3>
+                    <p>Tạo phiếu nhập, in mã vạch sản phẩm</p>
+                    <a href="#" class="stretched-link"></a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card card-menu p-4 text-center text-white bg-info h-100">
+                    <div class="icon-box"><i class="fas fa-chart-line"></i></div>
+                    <h3>Báo Cáo</h3>
+                    <p>Xem doanh thu, tồn kho, lãi lỗ</p>
+                    <a href="#" class="stretched-link"></a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html>

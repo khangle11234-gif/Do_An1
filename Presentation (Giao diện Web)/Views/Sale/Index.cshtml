@@ -1,0 +1,380 @@
+﻿@model IEnumerable<Business.DTOs.Output.SanPhamViewModel>
+@{
+    Layout = null; // Giao diện POS chạy full màn hình
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bán Hàng & Xuất Kho</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <style>
+        body {
+            height: 100vh;
+            overflow: hidden;
+            background-color: #e9ecef;
+            font-family: 'Segoe UI', sans-serif;
+        }
+
+        /* --- CỘT TRÁI: GIỎ HÀNG / HÓA ĐƠN --- */
+        .left-panel {
+            height: 100vh;
+            background: white;
+            border-right: 1px solid #dee2e6;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 10;
+        }
+
+        .cart-header {
+            padding: 15px;
+            background: #0d6efd; /* Màu xanh đậm */
+            color: white;
+        }
+
+        .cart-items {
+            flex: 1;
+            overflow-y: auto;
+            padding: 0;
+        }
+
+        .cart-footer {
+            padding: 15px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+        }
+
+        /* --- CỘT PHẢI: DANH SÁCH VẬT TƯ --- */
+        .right-panel {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+        }
+
+        .filter-bar {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            margin-bottom: 15px;
+        }
+
+        .product-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+            /* Tùy chỉnh thanh cuộn đẹp hơn */
+            scrollbar-width: thin;
+        }
+
+        /* --- THẺ SẢN PHẨM (CARD) --- */
+        .product-card {
+            border: 1px solid #eee;
+            border-radius: 8px;
+            transition: all 0.2s;
+            cursor: pointer;
+            background: white;
+            position: relative;
+            overflow: hidden;
+            height: 100%;
+        }
+
+            .product-card:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+                border-color: #0d6efd;
+            }
+
+        .product-img-wrapper {
+            height: 140px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #fff;
+            padding: 10px;
+        }
+
+        .product-img {
+            max-height: 100%;
+            max-width: 100%;
+            object-fit: contain;
+        }
+        /* Ngôi sao yêu thích */
+        .star-icon {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            color: #ffc107;
+            font-size: 18px;
+            display: none;
+            filter: drop-shadow(0 1px 1px rgba(0,0,0,0.3));
+        }
+
+        .is-fav .star-icon {
+            display: block;
+        }
+        /* Class kích hoạt hiện sao */
+
+        /* Nút quay về Dashboard */
+        .btn-back {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="row g-0">
+        <div class="col-md-4 col-lg-3 left-panel">
+            <div class="cart-header d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0 fw-bold"><i class="fas fa-file-invoice me-2"></i>Hóa Đơn Mới</h5>
+                    <small style="opacity: 0.8">@DateTime.Now.ToString("dd/MM/yyyy HH:mm")</small>
+                </div>
+                <span class="badge bg-light text-primary">@Context.Session.GetString("HoTen")</span>
+            </div>
+
+            <div class="cart-items">
+                <table class="table table-striped table-hover mb-0 align-middle">
+                    <thead class="table-light sticky-top" style="z-index: 1;">
+                        <tr>
+                            <th class="ps-3">Vật tư</th>
+                            <th style="width: 65px;">SL</th>
+                            <th class="text-end pe-3">Tiền</th>
+                            <th style="width: 30px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="cartBody">
+                    </tbody>
+                </table>
+
+                <div id="emptyCartMsg" class="text-center text-muted mt-5 pt-5">
+                    <i class="fas fa-box-open fa-3x mb-3 text-secondary" style="opacity: 0.3;"></i>
+                    <p>Chưa có vật tư nào được chọn</p>
+                </div>
+            </div>
+
+            <div class="cart-footer">
+                <div class="d-flex justify-content-between mb-2 small text-muted">
+                    <span>Số lượng mặt hàng:</span>
+                    <span id="lblTotalItems" class="fw-bold">0</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-end mb-3">
+                    <span class="h6 mb-0">TỔNG CỘNG:</span>
+                    <span id="lblTotalPrice" class="h3 text-danger fw-bold mb-0">0</span>
+                </div>
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary py-2 fw-bold text-uppercase shadow-sm" onclick="thanhToan()">
+                        <i class="fas fa-print me-2"></i> Thanh Toán & In (F9)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 col-lg-9 right-panel">
+
+            <div class="filter-bar row g-2 align-items-center">
+                <div class="col-md-5">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0 text-muted"><i class="fas fa-search"></i></span>
+                        <input type="text" id="txtSearch" class="form-control border-start-0 ps-0"
+                               placeholder="Nhập tên, mã vật tư hoặc mã vạch..." onkeyup="filterProducts()">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <select class="form-select" id="cboCategory" onchange="filterProducts()">
+                        <option value="">-- Tất cả kho --</option>
+                        <option value="VLXD">🧱 Vật liệu xây dựng (Cát, Đá, Xi măng)</option>
+                        <option value="DungCu">🔨 Dụng cụ & Máy móc</option>
+                        <option value="Son">🎨 Sơn & Hóa chất</option>
+                        <option value="DienNuoc">⚡ Điện & Nước</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end">
+                    <button class="btn btn-outline-dark w-100" onclick="alert('Đang kết nối máy quét...')">
+                        <i class="fas fa-barcode me-1"></i> Quét Barcode
+                    </button>
+                </div>
+            </div>
+
+            <div class="product-grid">
+                <div class="row g-3" id="productContainer">
+                    @foreach (var item in Model)
+                    {
+                        // Tạo các thuộc tính data- để phục vụ việc lọc bằng Javascript
+                        <div class="col-xxl-3 col-xl-3 col-lg-4 col-md-6 col-sm-6 product-item"
+                             data-name="@item.TenSP.ToLower()"
+                             data-code="@item.MaSP.ToLower()"
+                             data-group="@item.NhomHang">
+
+                            <div class="card product-card h-100 @(item.IsYeuThich ? "is-fav" : "")"
+                                 onclick="addToCart('@item.MaSP', '@item.TenSP', @item.GiaBan)">
+
+                                <i class="fas fa-star star-icon"></i>
+
+                                <div class="product-img-wrapper">
+                                    <img src="@(string.IsNullOrEmpty(item.HinhAnh) ? "https://via.placeholder.com/200x200?text=No+Image" : item.HinhAnh)"
+                                         class="product-img" alt="@item.TenSP">
+                                </div>
+
+                                <div class="card-body p-2 text-center border-top bg-white">
+                                    <div class="badge bg-secondary bg-opacity-10 text-secondary mb-1" style="font-size: 0.7rem;">@item.MaSP</div>
+                                    <h6 class="card-title text-truncate mb-1" title="@item.TenSP">@item.TenSP</h6>
+                                    <div class="text-danger fw-bold">@item.GiaBan.ToString("N0") đ</div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <a href="/Home/Dashboard" class="btn btn-secondary btn-back" title="Quay về màn hình chính">
+        <i class="fas fa-arrow-left"></i>
+    </a>
+
+    <script>
+        // Mảng lưu giỏ hàng
+        let cart = [];
+
+        // 1. HÀM THÊM VÀO GIỎ
+        function addToCart(ma, ten, gia) {
+            // Kiểm tra xem hàng đã có trong giỏ chưa
+            let item = cart.find(x => x.ma === ma);
+
+            if (item) {
+                item.sl++; // Có rồi thì tăng số lượng
+            } else {
+                // Chưa có thì thêm mới
+                cart.push({ ma: ma, ten: ten, gia: gia, sl: 1 });
+            }
+            // Vẽ lại giao diện
+            renderCart();
+        }
+
+        // 2. HÀM VẼ LẠI GIAO DIỆN GIỎ HÀNG
+        function renderCart() {
+            let tbody = document.getElementById("cartBody");
+            let emptyMsg = document.getElementById("emptyCartMsg");
+
+            tbody.innerHTML = ""; // Xóa trắng bảng cũ
+            let totalMoney = 0;
+            let totalItems = 0;
+
+            if (cart.length === 0) {
+                emptyMsg.style.display = "block"; // Hiện thông báo trống
+            } else {
+                emptyMsg.style.display = "none";  // Ẩn thông báo trống
+
+                // Duyệt qua từng món trong giỏ để tạo dòng HTML
+                cart.forEach((item, index) => {
+                    let thanhTien = item.sl * item.gia;
+                    totalMoney += thanhTien;
+                    totalItems++; // Đếm số dòng mặt hàng
+
+                    let row = `
+                        <tr>
+                            <td class="ps-3">
+                                <div class="fw-bold text-truncate" style="max-width: 140px;" title="${item.ten}">${item.ten}</div>
+                                <div class="small text-muted">${item.gia.toLocaleString('vi-VN')}</div>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control form-control-sm text-center px-0"
+                                       value="${item.sl}" min="1"
+                                       onchange="updateSl(${index}, this.value)"
+                                       onclick="this.select()">
+                            </td>
+                            <td class="text-end pe-3 fw-bold text-primary">
+                                ${thanhTien.toLocaleString('vi-VN')}
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-link text-danger p-0" onclick="remove(${index})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    tbody.innerHTML += row;
+                });
+            }
+
+            // Cập nhật tổng tiền ở footer
+            document.getElementById("lblTotalPrice").innerText = totalMoney.toLocaleString('vi-VN') + " đ";
+            document.getElementById("lblTotalItems").innerText = totalItems;
+        }
+
+        // 3. HÀM XÓA SẢN PHẨM
+        function remove(index) {
+            if(confirm('Bạn có chắc muốn xóa vật tư này khỏi đơn?')) {
+                cart.splice(index, 1);
+                renderCart();
+            }
+        }
+
+        // 4. HÀM CẬP NHẬT SỐ LƯỢNG KHI GÕ VÀO Ô INPUT
+        function updateSl(index, newSl) {
+            if(newSl < 1) newSl = 1;
+            cart[index].sl = parseInt(newSl);
+            renderCart();
+        }
+
+        // 5. HÀM LỌC SẢN PHẨM (SEARCH & CATEGORY)
+        function filterProducts() {
+            // Lấy giá trị ô tìm kiếm (chuyển về chữ thường)
+            let keyword = document.getElementById("txtSearch").value.toLowerCase();
+            // Lấy giá trị ô chọn nhóm
+            let group = document.getElementById("cboCategory").value;
+
+            // Lấy tất cả thẻ sản phẩm
+            let items = document.getElementsByClassName("product-item");
+
+            for (let item of items) {
+                // Lấy dữ liệu ẩn đã gán lúc render
+                let name = item.getAttribute("data-name");
+                let code = item.getAttribute("data-code");
+                let itemGroup = item.getAttribute("data-group");
+
+                // Kiểm tra điều kiện
+                let matchKeyword = name.includes(keyword) || code.includes(keyword);
+                let matchGroup = group === "" || itemGroup === group;
+
+                // Nếu thỏa cả 2 thì hiện, không thì ẩn
+                if (matchKeyword && matchGroup) {
+                    item.style.display = "block"; // Hoặc "initial" nếu dùng bootstrap grid
+                } else {
+                    item.style.display = "none";
+                }
+            }
+        }
+
+        // 6. GIẢ LẬP THANH TOÁN
+        function thanhToan() {
+            if(cart.length === 0) {
+                alert("Giỏ hàng đang trống! Vui lòng chọn vật tư.");
+                return;
+            }
+            alert("Đã gửi đơn hàng xuống kho & Đang in hóa đơn...");
+            // Sau này sẽ gọi AJAX về Server tại đây
+        }
+    </script>
+
+</body>
+</html>
