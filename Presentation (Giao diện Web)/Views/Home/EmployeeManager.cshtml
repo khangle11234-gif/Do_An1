@@ -1,0 +1,398 @@
+﻿@{
+    Layout = null;
+    ViewData["Title"] = "Trang Chủ Doanh Nghiệp";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ Thống Quản Lý Doanh Nghiệp | Owner Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #2c3e50; /* Màu xanh đậm doanh nhân */
+            --accent-color: #3498db; /* Màu xanh sáng */
+            --bg-light: #f4f6f9;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            overflow-x: hidden;
+        }
+
+        /* === SIDEBAR (THANH MENU TRÁI) === */
+        .sidebar {
+            width: 260px;
+            background: white;
+            height: 100vh;
+            position: fixed;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+            .sidebar-header h5 {
+                font-weight: 800;
+                color: var(--primary-color);
+                letter-spacing: -0.5px;
+                margin: 0;
+            }
+
+            .sidebar-header small {
+                color: #7f8c8d;
+                font-size: 0.85rem;
+            }
+
+        .nav-link {
+            color: #555;
+            padding: 12px 20px;
+            margin: 4px 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+            .nav-link i {
+                width: 30px;
+                font-size: 1.1rem;
+                color: #95a5a6;
+            }
+
+            .nav-link:hover {
+                background-color: #ecf0f1;
+                color: var(--primary-color);
+            }
+
+                .nav-link:hover i {
+                    color: var(--accent-color);
+                }
+
+            .nav-link.active {
+                background-color: var(--primary-color);
+                color: white;
+                box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+            }
+
+                .nav-link.active i {
+                    color: #ecf0f1;
+                }
+
+        /* === MAIN CONTENT (NỘI DUNG CHÍNH) === */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+            min-height: 100vh;
+        }
+
+        /* === CARDS (THẺ THÔNG TIN) === */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+            transition: transform 0.2s;
+        }
+
+            .stat-card:hover {
+                transform: translateY(-5px);
+            }
+
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+        }
+
+        /* === TABLE STYLE === */
+        .table-custom th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .table-custom td {
+            vertical-align: middle;
+        }
+
+        /* === BUTTONS === */
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+        }
+
+        /* Tiêu đề từng phần */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-cubes me-2"></i>SMART WAREHOUSE</h5>
+            <small>Khu vực Chủ Doanh Nghiệp</small>
+        </div>
+
+        <div class="nav flex-column mt-3 nav-pills" id="v-pills-tab" role="tablist">
+            <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-2" style="font-size: 0.75rem;">Quản trị</small>
+            <a class="nav-link active" data-bs-toggle="pill" href="#tab-dashboard">
+                <i class="fas fa-chart-line"></i> Tổng quan (Dashboard)
+            </a>
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-finance">
+                <i class="fas fa-wallet"></i> Tài chính & Lợi nhuận
+            </a>
+
+            <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-3" style="font-size: 0.75rem;">Nghiệp vụ</small>
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-pos">
+                <i class="fas fa-cash-register"></i> Bán hàng (POS)
+            </a>
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-warehouse">
+                <i class="fas fa-warehouse"></i> Quản lý Kho hàng
+            </a>
+
+            <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-3" style="font-size: 0.75rem;">Dữ liệu</small>
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-products">
+                <i class="fas fa-box"></i> Sản phẩm & Giá
+            </a>
+            <a class="nav-link" data-bs-toggle="pill" href="#tab-partners">
+                <i class="fas fa-users"></i> Khách hàng & NCC
+            </a>
+        </div>
+
+        <div class="mt-auto border-top p-3">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+                <div>
+                    <div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div>
+                    <small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Online</small>
+                </div>
+            </div>
+            <a href="/Home/Logout" class="btn btn-outline-danger w-100 btn-sm"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tab-content" id="v-pills-tabContent">
+
+            <div class="tab-pane fade show active" id="tab-dashboard">
+                <div class="section-header">
+                    <div class="section-title">Tổng quan kinh doanh</div>
+                    <button class="btn btn-light border"><i class="fas fa-sync-alt me-2"></i>Làm mới</button>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="icon-box bg-success bg-opacity-10 text-success"><i class="fas fa-money-bill-wave"></i></div>
+                            <h6 class="text-muted mb-1">Doanh thu hôm nay</h6>
+                            <h3 class="fw-bold text-dark">15,400,000 ₫</h3>
+                            <small class="text-success"><i class="fas fa-arrow-up"></i> +12% so với hôm qua</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="icon-box bg-primary bg-opacity-10 text-primary"><i class="fas fa-coins"></i></div>
+                            <h6 class="text-muted mb-1">Lợi nhuận ước tính</h6>
+                            <h3 class="fw-bold text-dark">4,200,000 ₫</h3>
+                            <small class="text-muted">Biên lãi gộp: 27%</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="icon-box bg-warning bg-opacity-10 text-warning"><i class="fas fa-box-open"></i></div>
+                            <h6 class="text-muted mb-1">Sản phẩm sắp hết</h6>
+                            <h3 class="fw-bold text-dark">05 SP</h3>
+                            <small class="text-danger fw-bold">Cần nhập hàng ngay</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="stat-card">
+                            <div class="icon-box bg-info bg-opacity-10 text-info"><i class="fas fa-shopping-cart"></i></div>
+                            <h6 class="text-muted mb-1">Đơn hàng mới</h6>
+                            <h3 class="fw-bold text-dark">18 Đơn</h3>
+                            <small class="text-muted">Đang xử lý: 3</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stat-card" style="height: 400px; display: flex; align-items: center; justify-content: center; background-color: #f8f9fa; border: 2px dashed #ddd;">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-chart-area fa-3x mb-3"></i>
+                        <h5>Biểu đồ doanh thu (Sẽ tích hợp Chart.js sau)</h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-finance">
+                <div class="section-header">
+                    <div class="section-title">Báo cáo Tài chính</div>
+                    <button class="btn btn-primary"><i class="fas fa-file-export me-2"></i>Xuất Excel</button>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i> Đây là khu vực nhạy cảm. Chỉ tài khoản <b>Owner</b> mới thấy được Lợi nhuận và Giá vốn.
+                </div>
+                <div class="card stat-card p-5 text-center">
+                    <p class="text-muted">Khu vực quản lý Thu/Chi và Lợi nhuận ròng.</p>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-pos">
+                <div class="section-header">
+                    <div class="section-title">Bán hàng (POS)</div>
+                    <span class="badge bg-warning text-dark px-3 py-2">Quyền Owner: Cho phép giảm giá & Sửa đơn</span>
+                </div>
+                <div class="card stat-card" style="min-height: 500px;">
+                    <div class="d-flex justify-content-center align-items-center h-100">
+                        <div class="text-center">
+                            <i class="fas fa-cash-register fa-4x text-muted mb-3"></i>
+                            <h4>Giao diện Bán hàng</h4>
+                            <p class="text-muted">Nơi Owner bán hàng trực tiếp, quét mã vạch...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-warehouse">
+                <div class="section-header">
+                    <div class="section-title">Quản lý Kho hàng</div>
+                    <div>
+                        <button class="btn btn-success me-2"><i class="fas fa-plus me-2"></i>Nhập hàng</button>
+                        <button class="btn btn-warning"><i class="fas fa-check-double me-2"></i>Kiểm kê kho</button>
+                    </div>
+                </div>
+
+                <div class="card stat-card mb-4">
+                    <div class="card-body">
+                        <h5><i class="fas fa-filter me-2"></i>Bộ lọc tìm kiếm</h5>
+                        <div class="row g-3 mt-1">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" placeholder="Tìm theo tên SP, Mã vạch...">
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option>Tất cả danh mục</option>
+                                    <option>Điện tử</option>
+                                    <option>Gia dụng</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <select class="form-select">
+                                    <option>Trạng thái tồn kho</option>
+                                    <option>Sắp hết hàng</option>
+                                    <option>Tồn kho nhiều</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button class="btn btn-primary w-100">Tìm kiếm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stat-card">
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Hình ảnh</th>
+                                    <th>Mã SP</th>
+                                    <th>Tên Sản Phẩm</th>
+                                    <th>Giá Vốn (Owner)</th>
+                                    <th>Giá Bán</th>
+                                    <th>Tồn kho</th>
+                                    <th>Trạng thái</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="7" class="text-center py-5 text-muted">Đang tải dữ liệu kho...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-products">
+                <div class="section-header">
+                    <div class="section-title">Danh mục Sản phẩm</div>
+                    <button class="btn btn-primary"><i class="fas fa-plus me-2"></i>Thêm sản phẩm mới</button>
+                </div>
+                <div class="card stat-card p-5 text-center">
+                    <p class="text-muted">Khu vực quản lý Master Data (Tên, Mã vạch, Đơn vị tính, Giá).</p>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-partners">
+                <div class="section-header">
+                    <div class="section-title">Đối tác & Khách hàng</div>
+                </div>
+                <ul class="nav nav-tabs mb-3">
+                    <li class="nav-item"><a class="nav-link active" href="#">Khách hàng</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Nhà cung cấp</a></li>
+                </ul>
+                <div class="card stat-card p-5 text-center">
+                    <p class="text-muted">Khu vực quản lý CRM và Supplier.</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Script nhỏ để giữ tab khi reload (giống Admin)
+        document.addEventListener("DOMContentLoaded", function () {
+            var activeTab = localStorage.getItem('ownerActiveTab');
+            if (activeTab) {
+                var tabTrigger = new bootstrap.Tab(document.querySelector('a[href="' + activeTab + '"]'));
+                tabTrigger.show();
+            }
+
+            var tabLinks = document.querySelectorAll('a[data-bs-toggle="pill"]');
+            tabLinks.forEach(function (tab) {
+                tab.addEventListener('shown.bs.tab', function (e) {
+                    localStorage.setItem('ownerActiveTab', e.target.getAttribute('href'));
+                });
+            });
+        });
+    </script>
+</body>
+</html>

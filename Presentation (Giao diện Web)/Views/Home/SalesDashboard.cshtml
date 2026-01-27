@@ -1,0 +1,60 @@
+﻿@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Bán Hàng (POS)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="row vh-100">
+            <div class="col-md-8 bg-light p-3">
+                <div class="d-flex justify-content-between mb-3">
+                    <h4>📦 Kho Hàng (Vật liệu xây dựng)</h4>
+                    <input type="text" class="form-control w-25" placeholder="Tìm xi măng, sắt thép...">
+                </div>
+
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <img src="https://placehold.co/200x150?text=Xi+Mang" class="card-img-top" alt="...">
+                            <div class="card-body p-2 text-center">
+                                <h6 class="card-title">Xi măng Hà Tiên</h6>
+                                <p class="text-danger fw-bold">85.000 đ</p>
+                                <button class="btn btn-primary btn-sm w-100">Thêm</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card h-100">
+                            <img src="https://placehold.co/200x150?text=Thep" class="card-img-top" alt="...">
+                            <div class="card-body p-2 text-center">
+                                <h6 class="card-title">Thép cuộn Ø6</h6>
+                                <p class="text-danger fw-bold">16.500 đ</p>
+                                <button class="btn btn-primary btn-sm w-100">Thêm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4 border-start p-3 d-flex flex-column">
+                <h4 class="text-primary">🛒 Đơn Hàng Mới</h4>
+                <div class="flex-grow-1 border rounded p-2 mb-3 bg-white">
+                    <p class="text-center text-muted mt-5">Chưa có sản phẩm nào</p>
+                </div>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between">
+                        <h5>Tổng tiền:</h5>
+                        <h3 class="text-danger">0 đ</h3>
+                    </div>
+                    <button class="btn btn-success w-100 py-3 fw-bold mt-2">THANH TOÁN</button>
+                    <a href="/Home/Logout" class="btn btn-secondary w-100 mt-2">Đăng xuất</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

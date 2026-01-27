@@ -1,0 +1,51 @@
+﻿@{
+    Layout = null; // Hoặc Layout Admin riêng
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Hệ Thống Quản Trị (Admin)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-dark text-white">
+    <div class="container mt-5">
+        <h2 class="text-uppercase text-warning border-bottom pb-2">🛠 Admin Panel - Cấu Hình Hệ Thống</h2>
+
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <div class="card bg-secondary text-white mb-3">
+                    <div class="card-body text-center">
+                        <h1>💾</h1>
+                        <h5 class="card-title">Sao lưu Dữ liệu</h5>
+                        <p class="card-text">Backup database SQL Server định kỳ.</p>
+                        <button class="btn btn-warning w-100">Backup Ngay</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card bg-secondary text-white mb-3">
+                    <div class="card-body text-center">
+                        <h1>📜</h1>
+                        <h5 class="card-title">Nhật ký Hệ thống</h5>
+                        <p class="card-text">Xem ai đã đăng nhập, lỗi hệ thống.</p>
+                        <button class="btn btn-info w-100">Xem Logs</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card bg-secondary text-white mb-3">
+                    <div class="card-body text-center">
+                        <h1>⚙️</h1>
+                        <h5 class="card-title">Tham số Cấu hình</h5>
+                        <p class="card-text">Chỉnh sửa thông tin công ty, VAT...</p>
+                        <button class="btn btn-light w-100">Cấu hình</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <a href="/Home/Logout" class="btn btn-danger mt-3">Đăng xuất</a>
+    </div>
+</body>
+</html>

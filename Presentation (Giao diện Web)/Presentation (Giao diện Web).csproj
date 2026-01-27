@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Presentation__Giao_diện_Web_</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Business (Lớp nghiệp vụ)\Business (Lớp nghiệp vụ).csproj" />
+    <ProjectReference Include="..\Core (Lớp lõi)\Core (Lớp lõi).csproj" />
+    <ProjectReference Include="..\Data (Lớp dữ liệu)\Data (Lớp dữ liệu).csproj" />
+  </ItemGroup>
+
+</Project>
