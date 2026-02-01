@@ -7,336 +7,449 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>@ViewData["Title"] | Smart Warehouse</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
     <style>
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Gradient Tím Xanh */
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-light: #ffffff;
-            --text-muted: #adb5bd;
+            /* MÀU SẮC ĐỒNG BỘ VỚI DASHBOARD */
+            --primary-color: #2c3e50; /* Xanh đen (Sidebar) */
+            --accent-color: #3498db; /* Xanh dương (Highlight) */
+            --bg-light: #f4f6f9; /* Nền xám nhạt */
+            --text-dark: #333333;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: 'Inter', sans-serif;
             height: 100vh;
             margin: 0;
+            background-color: #fff;
+            overflow: hidden;
+        }
+
+        .login-wrapper {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* === CỘT TRÁI: THƯƠNG HIỆU (BRANDING) === */
+        .brand-side {
+            width: 55%;
+            background-color: var(--primary-color);
+            /* Họa tiết chìm tạo độ sang trọng */
+            background-image: linear-gradient(135deg, rgba(44, 62, 80, 0.95), rgba(52, 152, 219, 0.8)), url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            position: relative;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .brand-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            color: white;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2));
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .brand-title {
+            font-weight: 800;
+            font-size: 2.5rem;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        .brand-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            font-weight: 300;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        /* === CỘT PHẢI: FORM === */
+        .form-side {
+            width: 45%;
             display: flex;
             justify-content: center;
             align-items: center;
-            background: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
+            background-color: #fff;
             position: relative;
         }
 
-            /* Lớp phủ tối màu gradient lên nền */
-            body::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
-                z-index: 0;
+        .form-content {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            animation: slideInRight 0.6s ease-out;
+        }
+
+        .login-header {
+            margin-bottom: 40px;
+        }
+
+            .login-header h3 {
+                font-weight: 700;
+                color: var(--primary-color);
+                margin-bottom: 10px;
             }
 
-        .login-wrapper {
+            .login-header p {
+                color: #6c757d;
+                font-size: 0.95rem;
+            }
+
+        /* INPUT STYLE (SẠCH SẼ - BUSINESS) */
+        .form-group {
+            margin-bottom: 20px;
             position: relative;
-            z-index: 1;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary-color);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .form-control-custom {
             width: 100%;
-            max-width: 450px;
-            padding: 20px;
+            padding: 12px 15px 12px 45px; /* Chừa chỗ cho icon */
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            color: var(--text-dark);
+            background-color: #f8fafc;
+            transition: all 0.2s;
         }
 
-        /* === GLASS CARD (Khung kính mờ) === */
-        .glass-card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(20px); /* Hiệu ứng mờ kính */
-            -webkit-backdrop-filter: blur(20px);
-            border-radius: 24px;
-            border: 1px solid var(--glass-border);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            padding: 40px;
-            text-align: center;
-            color: var(--text-light);
-            animation: slideUp 0.6s ease-out;
+            .form-control-custom:focus {
+                outline: none;
+                border-color: var(--accent-color);
+                background-color: #fff;
+                box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+            }
+
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 42px; /* Căn chỉnh theo label */
+            color: #94a3b8;
+            font-size: 1.1rem;
+            transition: 0.2s;
         }
 
-        @@keyframes slideUp {
+        .form-control-custom:focus + .input-icon {
+            color: var(--accent-color);
+        }
+
+        /* BUTTON STYLE */
+        .btn-login {
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 10px;
+        }
+
+            .btn-login:hover {
+                background-color: #1a252f; /* Màu tối hơn chút */
+                transform: translateY(-2px);
+                box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+            }
+
+        /* LINKS & UTILS */
+        .auth-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+        }
+
+        .forgot-link {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+            .forgot-link:hover {
+                text-decoration: underline;
+            }
+
+        .form-check-input:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+
+        /* ALERTS */
+        .alert-custom {
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+
+        .alert-danger-custom {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+        }
+
+        .alert-success-custom {
+            background-color: #f0fdf4;
+            color: #16a34a;
+            border: 1px solid #dcfce7;
+        }
+
+        .alert-custom i {
+            margin-right: 10px;
+            font-size: 1.1rem;
+        }
+
+        /* RESPONSIVE */
+        @@media (max-width: 900px) {
+            .brand-side {
+                display: none;
+            }
+
+            .form-side {
+                width: 100%;
+            }
+
+            .form-content {
+                padding: 20px;
+            }
+        }
+
+        /* ANIMATIONS */
+        @@keyframes float {
+            0%, 100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @@keyframes slideInRight {
             from {
                 opacity: 0;
-                transform: translateY(30px);
+                transform: translateX(20px);
             }
 
             to {
                 opacity: 1;
-                transform: translateY(0);
+                transform: translateX(0);
             }
         }
 
-        .brand-logo {
-            font-size: 3rem;
-            margin-bottom: 10px;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+        /* Shake Effect */
+        .shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+            border-color: #dc2626;
         }
 
-        /* === INPUT STYLES === */
-        .input-group-custom {
-            position: relative;
-            margin-bottom: 25px;
-            text-align: left;
-        }
-
-            .input-group-custom i {
-                position: absolute;
-                left: 0;
-                top: 15px;
-                color: var(--text-muted);
-                font-size: 1.2rem;
-                transition: 0.3s;
+        @@keyframes shake {
+            10%, 90% {
+                transform: translateX(-1px);
             }
 
-        .form-control-custom {
+            20%, 80% {
+                transform: translateX(2px);
+            }
+
+            30%, 50%, 70% {
+                transform: translateX(-4px);
+            }
+
+            40%, 60% {
+                transform: translateX(4px);
+            }
+        }
+
+        /* MODAL */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
             width: 100%;
-            background: transparent;
-            border: none;
-            border-bottom: 2px solid var(--glass-border);
-            padding: 12px 10px 12px 35px;
-            color: var(--text-light);
-            font-size: 1rem;
-            transition: 0.3s;
-            outline: none;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            justify-content: center;
+            align-items: center;
         }
 
-            /* Khi input được focus */
-            .form-control-custom:focus {
-                border-bottom-color: #a78bfa; /* Màu tím sáng */
-            }
-
-                .form-control-custom:focus + i {
-                    color: #a78bfa;
-                }
-
-        /* Ẩn màu nền mặc định của trình duyệt khi autocomplete */
-        input:-webkit-autofill,
-        input:-webkit-autofill:hover,
-        input:-webkit-autofill:focus,
-        input:-webkit-autofill:active {
-            -webkit-box-shadow: 0 0 0 30px rgba(0,0,0,0) inset !important;
-            -webkit-text-fill-color: var(--text-light) !important;
-            transition: background-color 5000s ease-in-out 0s;
-        }
-
-        /* Nút hiện mật khẩu */
-        .toggle-password {
-            position: absolute;
-            right: 0;
-            top: 15px;
-            cursor: pointer;
-            color: var(--text-muted);
-        }
-
-            .toggle-password:hover {
-                color: var(--text-light);
-            }
-
-        /* === BUTTON & LINKS === */
-        .btn-gradient {
-            width: 100%;
-            padding: 14px;
-            border: none;
+        .modal-box {
+            background: white;
+            padding: 30px;
             border-radius: 12px;
-            background: var(--primary-gradient);
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            animation: zoomIn 0.2s;
+        }
+
+        .modal-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .close-btn {
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 10px 20px -10px rgba(118, 75, 162, 0.5);
+            color: #999;
+            font-size: 1.2rem;
         }
 
-            .btn-gradient:hover {
-                transform: translateY(-3px);
-                box-shadow: 0 15px 30px -10px rgba(118, 75, 162, 0.7);
+            .close-btn:hover {
+                color: #333;
             }
 
-        .forgot-link {
-            color: var(--text-muted);
-            text-decoration: none;
-            font-size: 0.9rem;
-            transition: 0.3s;
-        }
-
-            .forgot-link:hover {
-                color: var(--text-light);
-                text-decoration: underline;
+        @@keyframes zoomIn {
+            from {
+                transform: scale(0.9);
+                opacity: 0;
             }
 
-        .form-check-label {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            cursor: pointer;
-        }
-
-        .form-check-input:checked {
-            background-color: #764ba2;
-            border-color: #764ba2;
-        }
-
-        /* Alerts trong nền tối */
-        .alert-custom {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: none;
-            color: var(--text-light);
-        }
-
-        .alert-danger-custom {
-            border-left: 4px solid #ff4d4d;
-        }
-
-        .alert-success-custom {
-            border-left: 4px solid #00b894;
-        }
-
-        /* === MODAL DARK THEME === */
-        .modal-content-dark {
-            background: #1e293b;
-            color: var(--text-light);
-            border: 1px solid var(--glass-border);
-        }
-
-        .modal-header-dark {
-            border-bottom: 1px solid var(--glass-border);
-        }
-
-        .modal-close-white {
-            filter: invert(1);
-        }
-
-        .form-control-dark {
-            background: #0f172a;
-            border: 1px solid var(--glass-border);
-            color: var(--text-light);
-        }
-
-            .form-control-dark:focus {
-                background: #0f172a;
-                color: var(--text-light);
-                border-color: #a78bfa;
-                box-shadow: 0 0 0 0.25rem rgba(167, 139, 250, 0.25);
+            to {
+                transform: scale(1);
+                opacity: 1;
             }
+        }
     </style>
 </head>
 <body>
 
     <div class="login-wrapper">
-        <div class="glass-card">
-            <div class="mb-4">
-                <i class="fas fa-cubes brand-logo"></i>
-                <h2 class="fw-bold">Smart Warehouse</h2>
-                <p class="text-muted" style="color: rgba(255,255,255,0.7) !important;">Quản lý kho hàng thông minh</p>
+
+        <div class="brand-side">
+            <i class="fas fa-cubes brand-icon"></i>
+            <div class="brand-title">Smart Warehouse</div>
+            <div class="brand-subtitle">
+                Giải pháp quản lý kho hàng toàn diện cho doanh nghiệp hiện đại. Tối ưu hóa quy trình, nâng cao hiệu suất.
             </div>
+            <small style="position: absolute; bottom: 20px; opacity: 0.6;">© 2024 Enterprise Edition</small>
+        </div>
 
-            @if (ViewBag.Error != null)
-            {
-                <div class="alert alert-custom alert-danger-custom fade show d-flex align-items-center text-start" role="alert">
-                    <i class="fas fa-exclamation-circle me-3 text-danger"></i>
-                    <div>@ViewBag.Error</div>
-                </div>
-            }
-            @if (TempData["Message"] != null)
-            {
-                <div class="alert alert-custom alert-success-custom fade show d-flex align-items-center text-start" role="alert">
-                    <i class="fas fa-check-circle me-3 text-success"></i>
-                    <div>@TempData["Message"]</div>
-                </div>
-            }
-
-            <form action="/Home/Index" method="post" class="mt-4">
-
-                <div class="input-group-custom">
-                    <input type="text" class="form-control-custom" name="TenDangNhap" placeholder="Tên đăng nhập" required autofocus value="@(Model?.TenDangNhap)">
-                    <i class="fas fa-user"></i>
+        <div class="form-side">
+            <div class="form-content" id="loginCard">
+                <div class="login-header">
+                    <h3>Xin chào,</h3>
+                    <p>Vui lòng đăng nhập để truy cập Dashboard.</p>
                 </div>
 
-                <div class="input-group-custom">
-                    <input type="password" class="form-control-custom" name="MatKhau" id="inputPassword" placeholder="Mật khẩu" required>
-                    <i class="fas fa-lock"></i>
-                    <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
-                </div>
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert-custom alert-danger-custom"><i class="fas fa-exclamation-circle"></i> @ViewBag.Error</div>
+                }
+                @if (TempData["Message"] != null)
+                {
+                    <div class="alert-custom alert-success-custom"><i class="fas fa-check-circle"></i> @TempData["Message"]</div>
+                }
 
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" id="rememberMe">
-                        <label class="form-check-label" for="rememberMe">Ghi nhớ tôi</label>
+                <form action="/Home/Index" method="post">
+                    <div class="form-group">
+                        <label class="form-label">TÊN ĐĂNG NHẬP</label>
+                        <input type="text" class="form-control-custom" name="TenDangNhap" placeholder="Nhập tài khoản..." required autofocus value="@(Model?.TenDangNhap)">
+                        <i class="fas fa-user input-icon"></i>
                     </div>
-                    <a href="#" class="forgot-link" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Quên mật khẩu?</a>
+
+                    <div class="form-group">
+                        <label class="form-label">MẬT KHẨU</label>
+                        <input type="password" class="form-control-custom" name="MatKhau" id="passInput" placeholder="Nhập mật khẩu..." required>
+                        <i class="fas fa-lock input-icon"></i>
+                        <i class="fas fa-eye" id="togglePass" style="position: absolute; right: 15px; top: 42px; cursor: pointer; color: #94a3b8;" onclick="togglePassword()"></i>
+                    </div>
+
+                    <div class="auth-options">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="remember">
+                            <label class="form-check-label text-muted" for="remember">Ghi nhớ</label>
+                        </div>
+                        <a href="#" class="forgot-link" onclick="openModal()">Quên mật khẩu?</a>
+                    </div>
+
+                    <button type="submit" class="btn-login">
+                        Đăng Nhập <i class="fas fa-arrow-right ms-2"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="forgotModal">
+        <div class="modal-box">
+            <div class="modal-title">
+                <span><i class="fas fa-key me-2 text-warning"></i> Khôi phục mật khẩu</span>
+                <i class="fas fa-times close-btn" onclick="closeModal()"></i>
+            </div>
+            <p class="text-muted small mb-3">Nhập thông tin tài khoản để nhận mật khẩu mới qua Email.</p>
+            <form action="/Home/ForgotPassword" method="post">
+                <div class="form-group mb-3">
+                    <input type="text" name="username" class="form-control-custom ps-3" placeholder="Tên đăng nhập" required>
                 </div>
-
-                <button type="submit" class="btn-gradient">
-                    ĐĂNG NHẬP <i class="fas fa-arrow-right ms-2"></i>
-                </button>
-
+                <div class="form-group mb-3">
+                    <input type="email" name="email" class="form-control-custom ps-3" placeholder="Email đăng ký" required>
+                </div>
+                <div class="text-end">
+                    <button type="button" class="btn btn-light border me-1" onclick="closeModal()">Đóng</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: var(--primary-color);">Gửi yêu cầu</button>
+                </div>
             </form>
         </div>
-        <div class="text-center mt-3 text-muted small" style="color: rgba(255,255,255,0.5) !important;">
-            &copy; 2024 Smart Warehouse System. All rights reserved.
-        </div>
     </div>
 
-    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content modal-content-dark shadow-lg">
-                <div class="modal-header modal-header-dark">
-                    <h5 class="modal-title fw-bold text-white"><i class="fas fa-key me-2 text-warning"></i>Khôi phục mật khẩu</h5>
-                    <button type="button" class="btn-close modal-close-white" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body p-4">
-                    <p class="text-muted mb-4" style="color: rgba(255,255,255,0.7) !important;">Vui lòng nhập Tên đăng nhập và Email đã đăng ký để nhận mật khẩu mới.</p>
-                    <form action="/Home/ForgotPassword" method="post">
-                        <div class="mb-3">
-                            <label class="fw-bold small mb-1 text-white">Tên đăng nhập:</label>
-                            <input type="text" name="username" class="form-control form-control-dark" required>
-                        </div>
-                        <div class="mb-4">
-                            <label class="fw-bold small mb-1 text-white">Email đăng ký:</label>
-                            <input type="email" name="email" class="form-control form-control-dark" required>
-                        </div>
-                        <div class="text-end">
-                            <button type="button" class="btn btn-outline-light me-2 border-0" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.1);">Hủy</button>
-                            <button type="submit" class="btn btn-gradient" style="padding: 10px 25px; width: auto;">Gửi yêu cầu</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Hàm ẩn hiện mật khẩu
+        // LOGIC GIỮ NGUYÊN
         function togglePassword() {
-            var input = document.getElementById("inputPassword");
-            var icon = event.target;
-            if (input.type === "password") {
-                input.type = "text";
-                icon.classList.remove("fa-eye");
-                icon.classList.add("fa-eye-slash");
-            } else {
-                input.type = "password";
-                icon.classList.remove("fa-eye-slash");
-                icon.classList.add("fa-eye");
-            }
+            var x = document.getElementById("passInput");
+            var icon = document.getElementById("togglePass");
+            if (x.type === "password") { x.type = "text"; icon.classList.replace("fa-eye", "fa-eye-slash"); icon.style.color = "#3498db"; }
+            else { x.type = "password"; icon.classList.replace("fa-eye-slash", "fa-eye"); icon.style.color = "#94a3b8"; }
         }
+
+        function openModal() { document.getElementById("forgotModal").style.display = "flex"; }
+        function closeModal() { document.getElementById("forgotModal").style.display = "none"; }
+        window.onclick = function(e) { if(e.target == document.getElementById("forgotModal")) closeModal(); }
+
+        // Hiệu ứng rung khi lỗi
+        window.onload = function() {
+            var vbError = "@ViewBag.Error";
+            var tdError = "@TempData["Error"]";
+            if ((vbError && vbError.length > 0) || (tdError && tdError.length > 0)) {
+                var card = document.getElementById("loginCard");
+                card.classList.add("shake");
+                setTimeout(function() { card.classList.remove("shake"); }, 400);
+            }
+        };
     </script>
 </body>
 </html>
