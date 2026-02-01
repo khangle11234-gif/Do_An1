@@ -15,8 +15,11 @@ namespace Presentation.Controllers
             _context = context;
         }
 
-        // Helper check quyền
+        // Helper check quyền Admin
         private bool IsAdmin() => HttpContext.Session.GetString("VaiTro") == "Admin";
+
+        // [THÊM MỚI] Helper check quyền Owner (Chủ shop)
+        private bool IsOwner() => HttpContext.Session.GetString("VaiTro") == "Owner";
 
         // ============================================================
         // 1. TRANG CHỦ ADMIN (DASHBOARD)
@@ -73,12 +76,13 @@ namespace Presentation.Controllers
         }
 
         // ============================================================
-        // 3. XỬ LÝ LƯU USER (THÊM MỚI HOẶC SỬA) - ĐÃ CẬP NHẬT EMAIL
+        // 3. XỬ LÝ LƯU USER (THÊM MỚI HOẶC SỬA)
         // ============================================================
         [HttpPost]
         public IActionResult SaveUser(UserCreateViewModel model)
         {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+            // [SỬA] Cho phép cả Admin và Owner đều được dùng hàm này
+            if (!IsAdmin() && !IsOwner()) return RedirectToAction("Index", "Home");
 
             try
             {
@@ -89,14 +93,14 @@ namespace Presentation.Controllers
                     if (_context.NguoiDung.Any(u => u.TenDangNhap == model.TenDangNhap))
                     {
                         TempData["Error"] = "Tên đăng nhập đã tồn tại!";
-                        return RedirectToAction("Index");
+                        return RedirectBack(); // [SỬA] Điều hướng thông minh
                     }
 
                     // [MỚI] Kiểm tra trùng Email
                     if (_context.NguoiDung.Any(u => u.Email == model.Email))
                     {
                         TempData["Error"] = "Email này đã được sử dụng cho nhân viên khác!";
-                        return RedirectToAction("Index");
+                        return RedirectBack(); // [SỬA] Điều hướng thông minh
                     }
 
                     var newUser = new NguoiDung
@@ -136,14 +140,14 @@ namespace Presentation.Controllers
                     if (existingUser == null)
                     {
                         TempData["Error"] = $"Lỗi: Không tìm thấy nhân viên có mã {model.MaND} để sửa!";
-                        return RedirectToAction("Index");
+                        return RedirectBack(); // [SỬA] Điều hướng thông minh
                     }
 
                     // [MỚI] Kiểm tra trùng Email khi cập nhật (nếu có thay đổi email)
                     if (existingUser.Email != model.Email && _context.NguoiDung.Any(u => u.Email == model.Email))
                     {
                         TempData["Error"] = "Email mới bị trùng với nhân viên khác!";
-                        return RedirectToAction("Index");
+                        return RedirectBack(); // [SỬA] Điều hướng thông minh
                     }
 
                     // Bước 3: Gán dữ liệu MỚI vào đối tượng CŨ
@@ -188,7 +192,7 @@ namespace Presentation.Controllers
                 TempData["Error"] = "Lỗi hệ thống: " + ex.Message;
             }
 
-            return RedirectToAction("Index");
+            return RedirectBack(); // [SỬA] Điều hướng thông minh
         }
 
         // ============================================================
@@ -207,7 +211,8 @@ namespace Presentation.Controllers
         [HttpPost]
         public IActionResult DeleteUser(string id)
         {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+            // [SỬA] Cho phép cả Admin và Owner dùng hàm này
+            if (!IsAdmin() && !IsOwner()) return RedirectToAction("Index", "Home");
 
             try
             {
@@ -217,7 +222,7 @@ namespace Presentation.Controllers
                 if (userToDelete == null)
                 {
                     TempData["Error"] = "Không tìm thấy nhân viên này!";
-                    return RedirectToAction("Index");
+                    return RedirectBack(); // [SỬA] Điều hướng thông minh
                 }
 
                 // === [QUAN TRỌNG] LOGIC BẢO VỆ TÀI KHOẢN ADMIN ===
@@ -229,14 +234,14 @@ namespace Presentation.Controllers
                 if (userToDelete.MaND == currentLoggedInUser)
                 {
                     TempData["Error"] = "NGUY HIỂM: Bạn không thể tự xóa tài khoản của chính mình!";
-                    return RedirectToAction("Index");
+                    return RedirectBack(); // [SỬA] Điều hướng thông minh
                 }
 
                 // Check 2: Không được xóa tài khoản Admin gốc (Super Admin)
                 if (userToDelete.TenDangNhap.ToLower() == "admin")
                 {
                     TempData["Error"] = "BẢO MẬT: Không thể xóa tài khoản Quản trị gốc (Root)!";
-                    return RedirectToAction("Index");
+                    return RedirectBack(); // [SỬA] Điều hướng thông minh
                 }
 
                 // =================================================
@@ -262,7 +267,21 @@ namespace Presentation.Controllers
                 TempData["Error"] = "Không thể xóa nhân viên này vì họ đã có lịch sử giao dịch! Hãy chọn 'Sửa' và tắt trạng thái hoạt động thay vì xóa.";
             }
 
-            return RedirectToAction("Index");
+            return RedirectBack(); // [SỬA] Điều hướng thông minh
+        }
+
+        // ============================================================
+        // [MỚI] HÀM ĐIỀU HƯỚNG THÔNG MINH
+        // ============================================================
+        private IActionResult RedirectBack()
+        {
+            // Nếu là Boss -> Về trang quản lý nhân viên của Boss (Trong HomeController)
+            if (IsOwner())
+            {
+                return RedirectToAction("EmployeeManager", "Home");
+            }
+            // Nếu là Admin -> Về Dashboard Admin
+            return RedirectToAction("Index", "Admin");
         }
     }
 }

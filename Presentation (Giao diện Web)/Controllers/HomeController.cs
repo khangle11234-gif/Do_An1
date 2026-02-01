@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Business.Interfaces;
 using Business.DTOs.Input;
+using Business.DTOs.Output; // [MỚI] Thêm dòng này để dùng ViewModel
 using Microsoft.AspNetCore.Http;
 using Data.Context;
 using Core.Entities;
-using System.Net;       // Thư viện gửi mail
-using System.Net.Mail;  // Thư viện gửi mail
+using System.Net;        // Thư viện gửi mail
+using System.Net.Mail;   // Thư viện gửi mail
 
 namespace Presentation.Controllers
 {
@@ -26,7 +27,6 @@ namespace Presentation.Controllers
         [HttpGet]
         public IActionResult Index()
         {
-            // Nếu đã đăng nhập thì chuyển hướng luôn
             if (HttpContext.Session.GetString("MaND") != null)
             {
                 return RedirectBasedOnRole(HttpContext.Session.GetString("VaiTro"));
@@ -40,71 +40,75 @@ namespace Presentation.Controllers
         [HttpPost]
         public IActionResult Index(LoginRequest request)
         {
-            var user = _authService.Login(request);
+            var user = _context.NguoiDung.FirstOrDefault(u => u.TenDangNhap == request.TenDangNhap);
 
-            if (user != null)
+            if (user == null)
             {
-                // Lưu thông tin vào Session
-                HttpContext.Session.SetString("MaND", user.MaND);
-                HttpContext.Session.SetString("HoTen", user.HoTen ?? "User");
-                HttpContext.Session.SetString("VaiTro", user.VaiTro);
-
-                // Ghi nhật ký đăng nhập
-                try
-                {
-                    _context.LichSuHeThong.Add(new LichSuHeThong
-                    {
-                        NguoiThucHien = user.HoTen + " (" + request.TenDangNhap + ")",
-                        HanhDong = "Đăng nhập vào hệ thống",
-                        ThoiGian = DateTime.Now
-                    });
-                    _context.SaveChanges();
-                }
-                catch { }
-
-                return RedirectBasedOnRole(user.VaiTro);
+                ViewBag.Error = "Tài khoản không tồn tại!";
+                return View(request);
             }
 
-            // Đăng nhập thất bại -> Gửi lỗi về View để kích hoạt hiệu ứng Rung
-            ViewBag.Error = "Tài khoản hoặc mật khẩu không đúng!";
-            return View(request);
+            if (user.MatKhau != request.MatKhau)
+            {
+                ViewBag.Error = "Mật khẩu không chính xác!";
+                return View(request);
+            }
+
+            if (user.TrangThai != true)
+            {
+                ViewBag.Error = "Tài khoản của bạn đang bị TẠM DỪNG hoạt động. Vui lòng liên hệ Admin.";
+                return View(request);
+            }
+
+            // Đăng nhập thành công
+            HttpContext.Session.SetString("MaND", user.MaND);
+            HttpContext.Session.SetString("HoTen", user.HoTen ?? "User");
+            HttpContext.Session.SetString("VaiTro", user.VaiTro);
+
+            try
+            {
+                _context.LichSuHeThong.Add(new LichSuHeThong
+                {
+                    NguoiThucHien = user.HoTen + " (" + request.TenDangNhap + ")",
+                    HanhDong = "Đăng nhập vào hệ thống",
+                    ThoiGian = DateTime.Now
+                });
+                _context.SaveChanges();
+            }
+            catch { }
+
+            return RedirectBasedOnRole(user.VaiTro);
         }
 
         // ============================================================
-        // 3. XỬ LÝ QUÊN MẬT KHẨU (GỬI VỀ EMAIL THẬT)
+        // 3. XỬ LÝ QUÊN MẬT KHẨU
         // ============================================================
         [HttpPost]
         public IActionResult ForgotPassword(string username, string email)
         {
             try
             {
-                // Bước 1: Tìm nhân viên có đúng Tên đăng nhập VÀ Email này
                 var user = _context.NguoiDung.FirstOrDefault(u => u.TenDangNhap == username && u.Email == email);
 
                 if (user == null)
                 {
-                    TempData["Error"] = "Thông tin không khớp! Vui lòng kiểm tra lại Tên tài khoản và Email.";
+                    TempData["Error"] = "Thông tin không khớp! Email này không thuộc về tài khoản trên.";
                     return RedirectToAction("Index");
                 }
 
-                // Bước 2: Chặn Admin reset kiểu này (Bảo mật)
                 if (user.VaiTro == "Admin")
                 {
                     TempData["Error"] = "Tài khoản Admin không được phép khôi phục qua Email!";
                     return RedirectToAction("Index");
                 }
 
-                // Bước 3: Tạo mật khẩu ngẫu nhiên (6 ký tự viết hoa)
                 string newPassword = Guid.NewGuid().ToString().Substring(0, 6).ToUpper();
 
-                // Bước 4: Lưu mật khẩu mới vào Database
-                // (Lưu ý: Nếu hệ thống có mã hóa MD5 thì nhớ mã hóa newPassword trước khi gán)
                 user.MatKhau = newPassword;
                 _context.Update(user);
                 _context.SaveChanges();
 
-                // Bước 5: Gửi Email thật
-                bool sendResult = SendEmailToUser(user.Email, user.TenDangNhap, newPassword);
+                bool sendResult = SendEmailToUser(email, user.TenDangNhap, newPassword);
 
                 if (sendResult)
                 {
@@ -112,9 +116,7 @@ namespace Presentation.Controllers
                 }
                 else
                 {
-                    // Trường hợp gửi mail thất bại (do mạng hoặc sai pass ứng dụng)
-                    // Ta tạm thời hiện mật khẩu ra để test (Khi chạy thật thì xóa dòng này đi)
-                    TempData["Error"] = $"Gửi mail thất bại. Mật khẩu tạm thời: {newPassword}";
+                    TempData["Error"] = "Gửi mail thất bại. Vui lòng thử lại sau.";
                 }
             }
             catch (Exception ex)
@@ -126,55 +128,49 @@ namespace Presentation.Controllers
         }
 
         // ============================================================
-        // HÀM GỬI EMAIL (QUAN TRỌNG NHẤT)
+        // HÀM GỬI EMAIL
         // ============================================================
         private bool SendEmailToUser(string toEmail, string username, string newPass)
         {
             try
             {
-                // --- CẤU HÌNH GMAIL CỦA BẠN (SỬA Ở ĐÂY) ---
-                // 1. Nhập địa chỉ Gmail dùng để gửi
-                string fromEmail = "email_cua_ban@gmail.com";
-
-                // 2. Nhập Mật khẩu ứng dụng (KHÔNG PHẢI MẬT KHẨU ĐĂNG NHẬP GMAIL)
-                // Cách lấy: Vào Google Account -> Bảo mật -> Xác minh 2 bước -> Mật khẩu ứng dụng
-                string emailPassword = "mat_khau_ung_dung_16_ky_tu";
-                // ------------------------------------------------------------
+                string fromEmail = "khangle11234@gmail.com";
+                string emailPassword = "wnhn epsn fnfa bsdg";
 
                 MailMessage mail = new MailMessage();
-                mail.From = new MailAddress(fromEmail, "Hệ Thống Kho (No-Reply)"); // Tên người gửi hiển thị
-                mail.To.Add(toEmail); // Gửi đến email thật của nhân viên
+                mail.From = new MailAddress(fromEmail, "Hệ Thống Kho (Smart Warehouse)");
+                mail.To.Add(toEmail);
                 mail.Subject = "[Smart Warehouse] Cấp lại mật khẩu mới";
-                mail.IsBodyHtml = true; // Cho phép gửi nội dung HTML đẹp
+                mail.IsBodyHtml = true;
 
-                // Nội dung email
                 mail.Body = $@"
-                    <div style='font-family:Arial, sans-serif; padding:20px; border:1px solid #ddd; border-radius:10px;'>
+                    <div style='font-family:Arial, sans-serif; padding:20px; border:1px solid #ddd; border-radius:10px; background-color:#f9f9f9;'>
                         <h2 style='color:#0d6efd;'>Yêu cầu khôi phục mật khẩu</h2>
                         <p>Xin chào <b>{username}</b>,</p>
-                        <p>Hệ thống đã nhận được yêu cầu cấp lại mật khẩu của bạn.</p>
-                        <p>Mật khẩu đăng nhập mới của bạn là: <b style='font-size:18px; color:red;'>{newPass}</b></p>
+                        <p>Hệ thống nhận được yêu cầu cấp lại mật khẩu cho tài khoản liên kết với email này.</p>
+                        <div style='background: #fff; padding: 15px; border-left: 4px solid #0d6efd; margin: 15px 0;'>
+                            Mật khẩu đăng nhập mới của bạn là: <b style='font-size:20px; color:#d9534f; letter-spacing: 2px;'>{newPass}</b>
+                        </div>
+                        <p style='color:#555;'>Vui lòng đăng nhập và đổi lại mật khẩu ngay để bảo mật tài khoản.</p>
                         <hr>
-                        <p style='color:#777; font-size:12px;'>Vui lòng đăng nhập và đổi lại mật khẩu ngay để bảo mật tài khoản.</p>
+                        <small style='color:#999;'>Đây là email tự động, vui lòng không trả lời.</small>
                     </div>";
 
                 SmtpClient smtp = new SmtpClient("smtp.gmail.com");
-                smtp.Port = 587; // Port chuẩn của Gmail
+                smtp.Port = 587;
                 smtp.Credentials = new NetworkCredential(fromEmail, emailPassword);
-                smtp.EnableSsl = true; // Bắt buộc bật SSL
+                smtp.EnableSsl = true;
 
                 smtp.Send(mail);
                 return true;
             }
             catch (Exception ex)
             {
-                // Ghi log lỗi vào Console để debug nếu cần
                 Console.WriteLine("Gửi mail lỗi: " + ex.Message);
                 return false;
             }
         }
 
-        // Hàm ẩn bớt email (vd: ng***@gmail.com)
         private string HideEmail(string email)
         {
             try
@@ -201,9 +197,31 @@ namespace Presentation.Controllers
             HttpContext.Session.Clear();
             return RedirectToAction("Index");
         }
-        public IActionResult EmployeeManager() => View();      // Dành cho Owner
-        public IActionResult SalesDashboard() => View();       // Dành cho Sale
-        public IActionResult WarehouseDashboard() => View();   // Dành cho Kho
-        public IActionResult Dashboard() => View();            // Trang mặc định
+
+        // ============================================================
+        // [CẬP NHẬT] TRANG QUẢN LÝ NHÂN VIÊN (BOSS)
+        // ============================================================
+        // Trong HomeController.cs
+        public IActionResult EmployeeManager()
+        {
+            // Kiểm tra quyền
+            var role = HttpContext.Session.GetString("VaiTro");
+            if (role != "Owner" && role != "Admin") return RedirectToAction("Index");
+
+            // Lấy dữ liệu
+            var listUser = _context.NguoiDung
+                                   .Where(u => u.VaiTro != "Admin") // Boss không thấy Admin
+                                   .OrderByDescending(x => x.MaND)
+                                   .ToList();
+
+            ViewBag.DanhSachQuyen = _context.NhomQuyen.ToList();
+
+            var model = new AdminDashboardViewModel { DanhSachNhanVien = listUser };
+            return View(model);
+        }
+
+        public IActionResult SalesDashboard() => View();
+        public IActionResult WarehouseDashboard() => View();
+        public IActionResult Dashboard() => View();
     }
 }

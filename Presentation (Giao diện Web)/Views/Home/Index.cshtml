@@ -1,196 +1,77 @@
 ﻿@model Business.DTOs.Input.LoginRequest
 @{
     Layout = null;
+    ViewData["Title"] = "Đăng Nhập Hệ Thống";
 }
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Đăng nhập hệ thống | Smart Warehouse</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] | Smart Warehouse</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Gradient Tím Xanh */
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-light: #ffffff;
+            --text-muted: #adb5bd;
         }
 
         body {
-            background-image: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
-            background-size: cover;
-            background-position: center;
+            font-family: 'Poppins', sans-serif;
             height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             margin: 0;
-        }
-
-        .overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(4px);
-        }
-
-        .login-box {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url('https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80') no-repeat center center/cover;
             position: relative;
-            width: 400px;
-            background: rgba(255, 255, 255, 0.15);
-            border-radius: 20px;
-            padding: 40px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
-            backdrop-filter: blur(15px);
-            color: white;
-            z-index: 1;
         }
 
-        /* Shake Effect */
-        .shake {
-            animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-            border: 1px solid #ff4d4d;
-            box-shadow: 0 0 15px rgba(255, 0, 0, 0.5);
-        }
-
-        @@keyframes shake {
-            10%, 90% {
-                transform: translate3d(-1px, 0, 0);
-            }
-
-            20%, 80% {
-                transform: translate3d(2px, 0, 0);
-            }
-
-            30%, 50%, 70% {
-                transform: translate3d(-4px, 0, 0);
-            }
-
-            40%, 60% {
-                transform: translate3d(4px, 0, 0);
-            }
-        }
-
-        h2 {
-            text-align: center;
-            margin-bottom: 30px;
-            font-weight: 600;
-            letter-spacing: 1px;
-        }
-
-        .input-group {
-            position: relative;
-            margin-bottom: 25px;
-        }
-
-            .input-group input {
-                width: 100%;
-                padding: 10px 0;
-                font-size: 16px;
-                color: #fff;
-                border: none;
-                border-bottom: 1px solid #fff;
-                background: transparent;
-                outline: none;
-            }
-
-            .input-group label {
+            /* Lớp phủ tối màu gradient lên nền */
+            body::before {
+                content: '';
                 position: absolute;
                 top: 0;
                 left: 0;
-                padding: 10px 0;
-                font-size: 16px;
-                color: #ddd;
-                pointer-events: none;
-                transition: 0.5s;
+                right: 0;
+                bottom: 0;
+                background: linear-gradient(to bottom right, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+                z-index: 0;
             }
 
-            .input-group input:focus ~ label, .input-group input:valid ~ label {
-                top: -20px;
-                left: 0;
-                color: #03e9f4;
-                font-size: 12px;
-            }
-
-        .forgot-pass-container {
-            text-align: right;
-            margin-top: 5px;
-            margin-bottom: 20px;
+        .login-wrapper {
             position: relative;
-            z-index: 10;
-        }
-
-        .forgot-link {
-            color: #fff;
-            font-size: 13px;
-            font-style: italic;
-            text-decoration: none;
-            cursor: pointer;
-            transition: 0.3s;
-            background: rgba(0,0,0,0.2);
-            padding: 2px 8px;
-            border-radius: 4px;
-        }
-
-            .forgot-link:hover {
-                color: #03e9f4;
-                background: rgba(0,0,0,0.5);
-            }
-
-        .btn-submit {
-            padding: 10px 20px;
-            background: #03e9f4;
-            border: none;
-            border-radius: 5px;
+            z-index: 1;
             width: 100%;
-            color: #fff;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.5s;
-            box-shadow: 0 0 5px #03e9f4;
+            max-width: 450px;
+            padding: 20px;
         }
 
-            .btn-submit:hover {
-                background: #fff;
-                color: #03e9f4;
-                box-shadow: 0 0 20px #03e9f4;
-            }
-
-        /* Alert Styles */
-        .alert-error {
-            background: rgba(220, 53, 69, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
+        /* === GLASS CARD (Khung kính mờ) === */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px); /* Hiệu ứng mờ kính */
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            padding: 40px;
             text-align: center;
-            font-size: 14px;
-            border: 1px solid #ff6b6b;
-            animation: slideDown 0.3s ease-out;
+            color: var(--text-light);
+            animation: slideUp 0.6s ease-out;
         }
 
-        .alert-success {
-            background: rgba(40, 167, 69, 0.8);
-            color: white;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 1px solid #28a745;
-            animation: slideDown 0.3s ease-out;
-        }
-
-        @@keyframes slideDown {
+        @@keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(-10px);
+                transform: translateY(30px);
             }
 
             to {
@@ -199,125 +80,263 @@
             }
         }
 
-        /* Modal Styles */
-        .custom-modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.8);
-            backdrop-filter: blur(5px);
+        .brand-logo {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .custom-modal-content {
-            background: #222;
-            margin: 15% auto;
-            padding: 30px;
-            border: 1px solid #03e9f4;
-            width: 90%;
-            max-width: 400px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(3, 233, 244, 0.5);
+        /* === INPUT STYLES === */
+        .input-group-custom {
             position: relative;
-            color: white;
-            animation: slideDown 0.4s;
+            margin-bottom: 25px;
+            text-align: left;
         }
 
-        .close-btn {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
+            .input-group-custom i {
+                position: absolute;
+                left: 0;
+                top: 15px;
+                color: var(--text-muted);
+                font-size: 1.2rem;
+                transition: 0.3s;
+            }
+
+        .form-control-custom {
+            width: 100%;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid var(--glass-border);
+            padding: 12px 10px 12px 35px;
+            color: var(--text-light);
+            font-size: 1rem;
+            transition: 0.3s;
+            outline: none;
+        }
+
+            /* Khi input được focus */
+            .form-control-custom:focus {
+                border-bottom-color: #a78bfa; /* Màu tím sáng */
+            }
+
+                .form-control-custom:focus + i {
+                    color: #a78bfa;
+                }
+
+        /* Ẩn màu nền mặc định của trình duyệt khi autocomplete */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(0,0,0,0) inset !important;
+            -webkit-text-fill-color: var(--text-light) !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Nút hiện mật khẩu */
+        .toggle-password {
+            position: absolute;
+            right: 0;
+            top: 15px;
+            cursor: pointer;
+            color: var(--text-muted);
+        }
+
+            .toggle-password:hover {
+                color: var(--text-light);
+            }
+
+        /* === BUTTON & LINKS === */
+        .btn-gradient {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: var(--primary-gradient);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px -10px rgba(118, 75, 162, 0.5);
+        }
+
+            .btn-gradient:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 15px 30px -10px rgba(118, 75, 162, 0.7);
+            }
+
+        .forgot-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+            .forgot-link:hover {
+                color: var(--text-light);
+                text-decoration: underline;
+            }
+
+        .form-check-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
             cursor: pointer;
         }
 
-            .close-btn:hover {
-                color: #03e9f4;
+        .form-check-input:checked {
+            background-color: #764ba2;
+            border-color: #764ba2;
+        }
+
+        /* Alerts trong nền tối */
+        .alert-custom {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: none;
+            color: var(--text-light);
+        }
+
+        .alert-danger-custom {
+            border-left: 4px solid #ff4d4d;
+        }
+
+        .alert-success-custom {
+            border-left: 4px solid #00b894;
+        }
+
+        /* === MODAL DARK THEME === */
+        .modal-content-dark {
+            background: #1e293b;
+            color: var(--text-light);
+            border: 1px solid var(--glass-border);
+        }
+
+        .modal-header-dark {
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .modal-close-white {
+            filter: invert(1);
+        }
+
+        .form-control-dark {
+            background: #0f172a;
+            border: 1px solid var(--glass-border);
+            color: var(--text-light);
+        }
+
+            .form-control-dark:focus {
+                background: #0f172a;
+                color: var(--text-light);
+                border-color: #a78bfa;
+                box-shadow: 0 0 0 0.25rem rgba(167, 139, 250, 0.25);
             }
     </style>
 </head>
 <body>
-    <div class="overlay"></div>
 
-    <div class="login-box" id="loginCard">
-        <h2>ĐĂNG NHẬP</h2>
-
-        @if (ViewBag.Error != null)
-        {
-            <div class="alert-error"><i class="fas fa-times-circle"></i> @ViewBag.Error</div>
-        }
-        @if (TempData["Error"] != null)
-        {
-            <div class="alert-error"><i class="fas fa-exclamation-triangle"></i> @TempData["Error"]</div>
-        }
-        @if (TempData["Message"] != null)
-        {
-            <div class="alert-success"><i class="fas fa-check-circle"></i> @TempData["Message"]</div>
-        }
-
-        <form asp-action="Index" method="post">
-            <div class="input-group">
-                <input asp-for="TenDangNhap" type="text" required autocomplete="off">
-                <label>Tên đăng nhập</label>
+    <div class="login-wrapper">
+        <div class="glass-card">
+            <div class="mb-4">
+                <i class="fas fa-cubes brand-logo"></i>
+                <h2 class="fw-bold">Smart Warehouse</h2>
+                <p class="text-muted" style="color: rgba(255,255,255,0.7) !important;">Quản lý kho hàng thông minh</p>
             </div>
 
-            <div class="input-group">
-                <input asp-for="MatKhau" type="password" required>
-                <label>Mật khẩu</label>
-            </div>
+            @if (ViewBag.Error != null)
+            {
+                <div class="alert alert-custom alert-danger-custom fade show d-flex align-items-center text-start" role="alert">
+                    <i class="fas fa-exclamation-circle me-3 text-danger"></i>
+                    <div>@ViewBag.Error</div>
+                </div>
+            }
+            @if (TempData["Message"] != null)
+            {
+                <div class="alert alert-custom alert-success-custom fade show d-flex align-items-center text-start" role="alert">
+                    <i class="fas fa-check-circle me-3 text-success"></i>
+                    <div>@TempData["Message"]</div>
+                </div>
+            }
 
-            <div class="forgot-pass-container">
-                <a class="forgot-link" onclick="openModal()">
-                    <i class="fas fa-key"></i> Quên mật khẩu?
-                </a>
-            </div>
+            <form action="/Home/Index" method="post" class="mt-4">
 
-            <button type="submit" class="btn-submit">VÀO HỆ THỐNG</button>
-        </form>
-    </div>
-
-    <div id="forgotModal" class="custom-modal">
-        <div class="custom-modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h3 style="text-align: center; color: #03e9f4; margin-bottom: 20px;">TÌM TÀI KHOẢN</h3>
-
-            <p style="text-align: center; color: #ccc; font-size: 13px; margin-bottom: 25px;">
-                Vui lòng nhập <b>Tên tài khoản</b> và <b>Email</b> để xác minh danh tính.
-            </p>
-
-            <form action="/Home/ForgotPassword" method="post">
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <input type="text" name="username" required autocomplete="off">
-                    <label>Tên đăng nhập</label>
+                <div class="input-group-custom">
+                    <input type="text" class="form-control-custom" name="TenDangNhap" placeholder="Tên đăng nhập" required autofocus value="@(Model?.TenDangNhap)">
+                    <i class="fas fa-user"></i>
                 </div>
 
-                <div class="input-group" style="margin-bottom: 20px;">
-                    <input type="email" name="email" required autocomplete="off">
-                    <label>Email đã đăng ký</label>
+                <div class="input-group-custom">
+                    <input type="password" class="form-control-custom" name="MatKhau" id="inputPassword" placeholder="Mật khẩu" required>
+                    <i class="fas fa-lock"></i>
+                    <i class="fas fa-eye toggle-password" onclick="togglePassword()"></i>
                 </div>
 
-                <button type="submit" class="btn-submit" style="margin-top: 10px;">GỬI YÊU CẦU</button>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="rememberMe">
+                        <label class="form-check-label" for="rememberMe">Ghi nhớ tôi</label>
+                    </div>
+                    <a href="#" class="forgot-link" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Quên mật khẩu?</a>
+                </div>
+
+                <button type="submit" class="btn-gradient">
+                    ĐĂNG NHẬP <i class="fas fa-arrow-right ms-2"></i>
+                </button>
+
             </form>
+        </div>
+        <div class="text-center mt-3 text-muted small" style="color: rgba(255,255,255,0.5) !important;">
+            &copy; 2024 Smart Warehouse System. All rights reserved.
         </div>
     </div>
 
-    <script>
-        function openModal() { document.getElementById("forgotModal").style.display = "block"; }
-        function closeModal() { document.getElementById("forgotModal").style.display = "none"; }
-        window.onclick = function(e) { if (e.target == document.getElementById("forgotModal")) closeModal(); }
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content modal-content-dark shadow-lg">
+                <div class="modal-header modal-header-dark">
+                    <h5 class="modal-title fw-bold text-white"><i class="fas fa-key me-2 text-warning"></i>Khôi phục mật khẩu</h5>
+                    <button type="button" class="btn-close modal-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <p class="text-muted mb-4" style="color: rgba(255,255,255,0.7) !important;">Vui lòng nhập Tên đăng nhập và Email đã đăng ký để nhận mật khẩu mới.</p>
+                    <form action="/Home/ForgotPassword" method="post">
+                        <div class="mb-3">
+                            <label class="fw-bold small mb-1 text-white">Tên đăng nhập:</label>
+                            <input type="text" name="username" class="form-control form-control-dark" required>
+                        </div>
+                        <div class="mb-4">
+                            <label class="fw-bold small mb-1 text-white">Email đăng ký:</label>
+                            <input type="email" name="email" class="form-control form-control-dark" required>
+                        </div>
+                        <div class="text-end">
+                            <button type="button" class="btn btn-outline-light me-2 border-0" data-bs-dismiss="modal" style="background: rgba(255,255,255,0.1);">Hủy</button>
+                            <button type="submit" class="btn btn-gradient" style="padding: 10px 25px; width: auto;">Gửi yêu cầu</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        window.onload = function() {
-            var hasError = "@ViewBag.Error";
-            if (hasError && hasError.length > 0) {
-                var card = document.getElementById("loginCard");
-                card.classList.add("shake");
-                setTimeout(function() { card.classList.remove("shake"); }, 500);
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Hàm ẩn hiện mật khẩu
+        function togglePassword() {
+            var input = document.getElementById("inputPassword");
+            var icon = event.target;
+            if (input.type === "password") {
+                input.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                input.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
             }
-        };
+        }
     </script>
 </body>
 </html>
