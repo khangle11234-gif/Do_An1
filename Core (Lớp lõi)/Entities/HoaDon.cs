@@ -36,5 +36,7 @@ namespace Core.Entities
         public virtual KhachHang KhachHang { get; set; }
 
         public virtual ICollection<CT_HoaDon> CT_HoaDons { get; set; }
+     
+      
     }
 }

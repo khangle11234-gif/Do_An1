@@ -23,5 +23,9 @@ namespace Core.Entities
 
         [ForeignKey("MaSerial")]
         public virtual SerialSP SerialSP { get; set; }
+        // Thêm 2 dòng này vào để bán hàng theo số lượng
+        public string MaSP { get; set; }
+        public int ? SoLuong { get; set; }
+      
     }
 }

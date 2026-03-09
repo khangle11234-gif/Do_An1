@@ -26,12 +26,13 @@ namespace Presentation.Controllers
         // ============================================================
         public IActionResult Index()
         {
-            if (!IsAdmin()) return RedirectToAction("Index", "Home");
+            // BÂY GIỜ CHỈ ADMIN MỚI ĐƯỢC VÀO ĐÂY
+            var role = HttpContext.Session.GetString("VaiTro");
+            if (role != "Admin") return RedirectToAction("Index", "Home");
 
+            // Chỉ giữ lại dữ liệu của Admin
             var info = _context.ThongTinCongTy.FirstOrDefault();
             var users = _context.NguoiDung.OrderBy(u => u.MaND).ToList();
-
-            // [QUAN TRỌNG] Lấy 50 dòng lịch sử mới nhất để hiển thị và đếm thông báo
             var logs = _context.LichSuHeThong.OrderByDescending(x => x.ThoiGian).Take(50).ToList();
 
             ViewBag.DanhSachQuyen = _context.NhomQuyen.ToList();

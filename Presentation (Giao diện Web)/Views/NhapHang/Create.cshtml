@@ -1,0 +1,252 @@
+﻿@{
+    ViewData["Title"] = "Tạo Phiếu Nhập Kho";
+    Layout = "~/Views/Shared/_Layout.cshtml"; // Dùng Layout chung của web
+
+    // Chuyển dữ liệu sang JSON để Javascript dùng (Quét mã, tìm kiếm)
+    var productsJson = System.Text.Json.JsonSerializer.Serialize(ViewBag.SanPham);
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"><i class="fas fa-truck-loading me-2"></i>Tạo Phiếu Nhập Kho</h2>
+        <a href="/Home/WarehouseDashboard" class="btn btn-outline-secondary"><i class="fas fa-arrow-left me-2"></i>Quay lại Kho</a>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card shadow-sm h-100">
+                <div class="card-header bg-white py-3">
+                    <div class="row g-2">
+                        <div class="col-md-5">
+                            <div class="input-group">
+                                <span class="input-group-text bg-primary text-white"><i class="fas fa-barcode"></i></span>
+                                <input type="text" id="scanBarcode" class="form-control" placeholder="Quét mã vạch vào đây..." autofocus>
+                            </div>
+                        </div>
+                        <div class="col-md-7 position-relative">
+                            <input type="text" id="searchProduct" class="form-control" placeholder="Gõ tên sản phẩm để tìm...">
+                            <div id="searchResults" class="list-group position-absolute w-100 shadow" style="z-index: 1000; display:none; max-height: 300px; overflow-y:auto;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">Sản phẩm</th>
+                                    <th style="width: 120px;" class="text-center">Số lượng</th>
+                                    <th style="width: 150px;" class="text-end">Đơn giá nhập</th>
+                                    <th style="width: 150px;" class="text-end">Thành tiền</th>
+                                    <th style="width: 50px;"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="cartBody">
+                                <tr id="emptyRow">
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="fas fa-box-open fa-3x mb-3 text-secondary opacity-25"></i>
+                                        <p>Chưa có sản phẩm nào trong phiếu.</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="fas fa-info-circle me-2"></i>Thông tin phiếu</h5>
+                </div>
+                <div class="card-body">
+                    <form id="frmPhieuNhap">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nhà cung cấp <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <select class="form-select" id="MaNCC">
+                                    <option value="">-- Chọn NCC --</option>
+                                    @if (ViewBag.NhaCungCap != null)
+                                    {
+                                        foreach (var ncc in ViewBag.NhaCungCap)
+                                        {
+                                            <option value="@ncc.MaNCC">@ncc.TenNCC</option>
+                                        }
+                                    }
+                                </select>
+                                <button class="btn btn-outline-secondary" type="button" title="Thêm NCC nhanh"><i class="fas fa-plus"></i></button>
+                            </div>
+                            <a href="#" class="small text-decoration-none mt-1 d-inline-block"><i class="fas fa-plus-circle"></i> Thêm NCC mới</a>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Người nhập:</label>
+                            <input type="text" class="form-control bg-light" value="Trần Chủ Shop" readonly>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ngày nhập:</label>
+                            <input type="datetime-local" class="form-control" id="NgayNhap" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")">
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Ghi chú:</label>
+                            <textarea class="form-control" id="GhiChu" rows="3" placeholder="Nhập ghi chú..."></textarea>
+                        </div>
+
+                        <hr>
+
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Tổng số lượng:</span>
+                            <span class="fw-bold" id="lblTotalQty">0</span>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fw-bold fs-5">Tổng tiền hàng:</span>
+                            <span class="fw-bold fs-3 text-danger" id="lblTotalMoney">0</span>
+                        </div>
+
+                        <button type="button" class="btn btn-primary w-100 py-3 fw-bold text-uppercase" onclick="submitPhieu()">
+                            <i class="fas fa-save me-2"></i> Hoàn Tất Nhập Kho
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    // 1. Dữ liệu sản phẩm (Từ Server đổ xuống)
+    var products = @Html.Raw(productsJson);
+    var cart = []; // Giỏ hàng nhập
+
+    // 2. Xử lý Quét Mã Vạch
+    document.getElementById("scanBarcode").addEventListener("keyup", function(e) {
+        if (e.key === "Enter") {
+            var code = this.value.trim();
+            var p = products.find(x => x.MaVach === code); // Tìm theo mã vạch
+
+            if(p) {
+                addToCart(p);
+                this.value = ""; // Xóa ô quét
+            } else {
+                Swal.fire("Không tìm thấy", "Mã vạch này chưa có trong hệ thống", "warning");
+            }
+        }
+    });
+
+    // 3. Xử lý Tìm kiếm Tên
+    var searchInput = document.getElementById("searchProduct");
+    var resBox = document.getElementById("searchResults");
+
+    searchInput.addEventListener("input", function() {
+        var k = this.value.toLowerCase();
+        resBox.innerHTML = "";
+
+        if(k.length < 1) { resBox.style.display="none"; return; }
+
+        // Tìm theo tên HOẶC mã sản phẩm
+        var matches = products.filter(p => p.TenSP.toLowerCase().includes(k) || p.MaSP.toLowerCase().includes(k));
+
+        if(matches.length > 0) {
+            resBox.style.display="block";
+            matches.slice(0, 10).forEach(p => {
+                var item = document.createElement("a");
+                item.className = "list-group-item list-group-item-action cursor-pointer";
+                item.innerHTML = `<div><strong>${p.TenSP}</strong></div><small class="text-muted">${p.MaSP}</small>`;
+                item.onclick = function() {
+                    addToCart(p);
+                    searchInput.value="";
+                    resBox.style.display="none";
+                };
+                resBox.appendChild(item);
+            });
+        } else { resBox.style.display="none"; }
+    });
+
+    // 4. Thêm vào danh sách nhập
+    function addToCart(p) {
+        var item = cart.find(c => c.MaSP === p.MaSP);
+        if(item) {
+            item.SoLuong++;
+        } else {
+            // Nếu chưa có giá nhập, mặc định là 0
+            cart.push({ MaSP: p.MaSP, TenSP: p.TenSP, DVT: p.DonViTinh, SoLuong: 1, DonGia: p.GiaNhap || 0 });
+        }
+        render(); // Vẽ lại bảng
+    }
+
+    // 5. Vẽ lại bảng lưới
+    function render() {
+        var tbody = document.getElementById("cartBody");
+        tbody.innerHTML = "";
+        var totalQ = 0, totalM = 0;
+
+        if(cart.length === 0) {
+            tbody.innerHTML = '<tr id="emptyRow"><td colspan="5" class="text-center text-muted py-5"><p>Chưa có sản phẩm.</p></td></tr>';
+        } else {
+            cart.forEach((c, i) => {
+                var tt = c.SoLuong * c.DonGia;
+                totalQ += parseInt(c.SoLuong); totalM += tt;
+
+                var row = `<tr>
+                    <td>
+                        <div class="fw-bold">${c.TenSP}</div>
+                        <div class="small text-muted">${c.MaSP}</div>
+                    </td>
+                    <td><input type="number" class="form-control text-center" value="${c.SoLuong}" onchange="update(${i}, 'q', this.value)"></td>
+                    <td><input type="number" class="form-control text-end" value="${c.DonGia}" onchange="update(${i}, 'p', this.value)"></td>
+                    <td class="text-end fw-bold">${tt.toLocaleString()}</td>
+                    <td class="text-center"><i class="fas fa-times text-danger cursor-pointer" onclick="remove(${i})"></i></td>
+                </tr>`;
+                tbody.innerHTML += row;
+            });
+        }
+
+        document.getElementById("lblTotalQty").innerText = totalQ;
+        document.getElementById("lblTotalMoney").innerText = totalM.toLocaleString('vi-VN') + ' VNĐ'; // Format đẹp
+    }
+
+    // Cập nhật số lượng/giá
+    window.update = function(i, type, val) {
+        if(type === 'q') cart[i].SoLuong = parseInt(val) || 1;
+        if(type === 'p') cart[i].DonGia = parseFloat(val) || 0;
+        render();
+    }
+
+    // Xóa dòng
+    window.remove = function(i) { cart.splice(i, 1); render(); }
+
+    // 6. Gửi dữ liệu về Server
+    window.submitPhieu = function() {
+        var ncc = document.getElementById("MaNCC").value;
+        if(!ncc) { Swal.fire("Thiếu thông tin", "Vui lòng chọn Nhà Cung Cấp", "warning"); return; }
+        if(cart.length === 0) { Swal.fire("Giỏ hàng trống", "Vui lòng chọn ít nhất 1 sản phẩm", "warning"); return; }
+
+        // Chuẩn bị dữ liệu gửi đi (Khớp với PhieuNhapInputModel)
+        var data = {
+            MaNCC: ncc,
+            NgayNhap: document.getElementById("NgayNhap").value,
+            GhiChu: document.getElementById("GhiChu").value,
+            ChiTiet: cart
+        };
+
+        // Gọi API
+        fetch('/NhapHang/SavePhieuNhap', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(d => {
+            if(d.success) {
+                Swal.fire("Thành công", "Đã nhập kho thành công!", "success").then(() => location.reload());
+            } else {
+                Swal.fire("Lỗi", d.msg, "error");
+            }
+        });
+    }
+</script>

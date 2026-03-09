@@ -1,5 +1,4 @@
-﻿
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Core.Entities
@@ -11,9 +10,13 @@ namespace Core.Entities
         [StringLength(20)]
         public string MaPN { get; set; }
 
+        [NotMapped] // <-- [ĐÃ THÊM] Bịt mắt EF, không cho nó tìm cột Id trong SQL nữa
+        public int Id { get; set; }
+
         [Key, Column(Order = 1)]
         [StringLength(10)]
         public string MaSP { get; set; }
+
 
         public int? SoLuong { get; set; }
         public decimal? DonGia { get; set; }

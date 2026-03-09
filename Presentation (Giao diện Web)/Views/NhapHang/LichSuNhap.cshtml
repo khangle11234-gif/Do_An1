@@ -1,0 +1,60 @@
+﻿@model IEnumerable<Core.Entities.PhieuNhap>
+@{
+    ViewData["Title"] = "Lịch sử Nhập Hàng";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="text-primary fw-bold"><i class="fas fa-history me-2"></i>Lịch Sử Nhập Hàng</h2>
+        <a href="/NhapHang/Create" class="btn btn-success"><i class="fas fa-plus me-2"></i>Tạo Phiếu Nhập Mới</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <table class="table table-hover table-bordered align-middle">
+                <thead class="table-primary text-center">
+                    <tr>
+                        <th>Mã Phiếu</th>
+                        <th>Ngày Nhập</th>
+                        <th>Nhà Cung Cấp</th>
+                        <th>Người Lập Phiếu</th>
+                        <th>Ghi Chú</th>
+                        <th>Tổng Tiền</th>
+                        <th>Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model != null && Model.Any())
+                    {
+                        foreach (var item in Model)
+                        {
+                            <tr>
+                                <td class="text-center fw-bold text-secondary">@item.MaPN</td>
+                                <td class="text-center">@item.NgayNhap.ToString("dd/MM/yyyy HH:mm")</td>
+
+                                <td>@(item.NhaCungCap != null ? item.NhaCungCap.TenNCC : "Không rõ")</td>
+
+                                <td class="text-center">@(item.NguoiDung != null ? item.NguoiDung.HoTen : "Không rõ")</td>
+
+                                <td>@item.GhiChu</td>
+                                <td class="text-end text-danger fw-bold">@item.TongTien.ToString("N0") đ</td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-info text-white">
+                                        <i class="fas fa-eye"></i> Xem chi tiết
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">Chưa có dữ liệu nhập hàng nào.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

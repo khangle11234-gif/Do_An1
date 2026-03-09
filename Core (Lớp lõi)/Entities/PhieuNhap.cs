@@ -1,4 +1,5 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
@@ -20,8 +21,17 @@ namespace Core.Entities
         [StringLength(10)]
         public string MaCN { get; set; }
 
-        public DateTime? NgayNhap { get; set; }
-        public decimal? TongTien { get; set; }
+        public DateTime NgayNhap { get; set; } = DateTime.Now;
+        public decimal TongTien { get; set; }
+
+        [NotMapped]
+        public int TrangThai { get; set; }
+
+        [NotMapped]
+        public string NguoiDuyet { get; set; }
+
+        [NotMapped]
+        public DateTime? NgayDuyet { get; set; }
 
         [StringLength(200)]
         public string GhiChu { get; set; }
@@ -31,6 +41,7 @@ namespace Core.Entities
 
         [ForeignKey("MaNCC")]
         public virtual NhaCungCap NhaCungCap { get; set; }
+
 
         [ForeignKey("MaCN")]
         public virtual ChiNhanh ChiNhanh { get; set; }

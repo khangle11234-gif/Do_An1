@@ -1,12 +1,14 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Business.Interfaces;
 using Business.DTOs.Input;
-using Business.DTOs.Output; // [MỚI] Thêm dòng này để dùng ViewModel
+using Business.DTOs.Output;
 using Microsoft.AspNetCore.Http;
 using Data.Context;
 using Core.Entities;
 using System.Net;        // Thư viện gửi mail
 using System.Net.Mail;   // Thư viện gửi mail
+using System;
+using System.Linq;
 
 namespace Presentation.Controllers
 {
@@ -183,10 +185,16 @@ namespace Presentation.Controllers
             catch { return email; }
         }
 
+        // ============================================================
+        // [ĐÃ SỬA] ĐIỀU HƯỚNG PHÂN QUYỀN ĐĂNG NHẬP
+        // ============================================================
         private IActionResult RedirectBasedOnRole(string role)
         {
             if (role == "Admin") return RedirectToAction("Index", "Admin");
-            if (role == "Owner") return RedirectToAction("EmployeeManager");
+
+            // Đổi đường dẫn của Boss sang nhà mới
+            if (role == "Owner") return RedirectToAction("Index", "Owner");
+
             if (role == "Sale") return RedirectToAction("SalesDashboard");
             if (role == "Kho") return RedirectToAction("WarehouseDashboard");
             return RedirectToAction("Dashboard");
@@ -198,27 +206,7 @@ namespace Presentation.Controllers
             return RedirectToAction("Index");
         }
 
-        // ============================================================
-        // [CẬP NHẬT] TRANG QUẢN LÝ NHÂN VIÊN (BOSS)
-        // ============================================================
-        // Trong HomeController.cs
-        public IActionResult EmployeeManager()
-        {
-            // Kiểm tra quyền
-            var role = HttpContext.Session.GetString("VaiTro");
-            if (role != "Owner" && role != "Admin") return RedirectToAction("Index");
-
-            // Lấy dữ liệu
-            var listUser = _context.NguoiDung
-                                   .Where(u => u.VaiTro != "Admin") // Boss không thấy Admin
-                                   .OrderByDescending(x => x.MaND)
-                                   .ToList();
-
-            ViewBag.DanhSachQuyen = _context.NhomQuyen.ToList();
-
-            var model = new AdminDashboardViewModel { DanhSachNhanVien = listUser };
-            return View(model);
-        }
+        // (Đã dọn dẹp hàm EmployeeManager() vì đã chuyển sang OwnerController)
 
         public IActionResult SalesDashboard() => View();
         public IActionResult WarehouseDashboard() => View();
