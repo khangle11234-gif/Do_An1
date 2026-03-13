@@ -43,6 +43,8 @@ namespace Presentation.Controllers
                 DanhSachNhanVien = users,
                 LichSu = logs
             };
+            ViewBag.ThemeConfig = _context.CauHinhHeThong.FirstOrDefault(c => c.Id == 1)
+                               ?? new CauHinhHeThong { TenCuaHang = "SmartWarehouse", MauChuDao = "#2c3e50", MauNhan = "#3498db" };
 
             return View(model);
         }
@@ -65,6 +67,7 @@ namespace Presentation.Controllers
                 info.Email = model.Email;
                 info.SoDienThoai = model.SoDienThoai;
                 info.ChoPhepBanHang = model.ChoPhepBanHang;
+
             }
 
             // [GHI NHẬT KÝ] Để hiện thông báo đỏ
@@ -269,6 +272,42 @@ namespace Presentation.Controllers
         {
             if (IsOwner()) return RedirectToAction("EmployeeManager", "Home");
             return RedirectToAction("Index", "Admin");
+        }
+        // =========================================================
+        // [API] LƯU CẤU HÌNH GIAO DIỆN (WHITE-LABEL)
+        // =========================================================
+        [HttpPost]
+        public IActionResult SaveThemeConfigAPI([FromBody] CauHinhHeThong model)
+        {
+            try
+            {
+                // Tìm dòng cấu hình ID = 1 (vì ta chỉ dùng 1 dòng duy nhất để lưu cài đặt chung)
+                var config = _context.CauHinhHeThong.FirstOrDefault(c => c.Id == 1);
+
+                if (config == null)
+                {
+                    // Nếu DB chưa có dòng nào thì tạo mới
+                    model.Id = 1;
+                    _context.CauHinhHeThong.Add(model);
+                }
+                else
+                {
+                    // Nếu có rồi thì cập nhật
+                    config.TenCuaHang = model.TenCuaHang;
+                    config.MauChuDao = model.MauChuDao;
+                    config.MauNhan = model.MauNhan;
+                    config.MauNen = model.MauNen;
+                    _context.CauHinhHeThong.Update(config);
+
+                }
+
+                _context.SaveChanges();
+                return Json(new { success = true, msg = "Lưu cấu hình giao diện thành công!" });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, msg = "Lỗi SQL: " + (ex.InnerException?.Message ?? ex.Message) });
+            }
         }
     }
 }

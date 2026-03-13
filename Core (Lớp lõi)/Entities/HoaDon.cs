@@ -36,7 +36,12 @@ namespace Core.Entities
         public virtual KhachHang KhachHang { get; set; }
 
         public virtual ICollection<CT_HoaDon> CT_HoaDons { get; set; }
-     
-      
+        // Thêm 3 dòng này vào class HoaDon
+        public DateTime? NgayTao { get; set; }
+        public decimal? TongTien { get; set; }
+        [StringLength(500)]
+        public string GhiChu { get; set; }
+
+
     }
 }

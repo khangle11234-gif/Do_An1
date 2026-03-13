@@ -13,27 +13,37 @@
 
     // Lấy tổng số nhật ký từ Server để so sánh
     int currentTotalLogs = Model.LichSu != null ? Model.LichSu.Count : 0;
+
+    // Lấy cấu hình Theme từ Controller
+    var theme = ViewBag.ThemeConfig as Core.Entities.CauHinhHeThong;
+    var tenCuaHang = theme?.TenCuaHang ?? "SmartWarehouse";
+    var mauChuDao = theme?.MauChuDao ?? "#2c3e50";
+    var mauNhan = theme?.MauNhan ?? "#3498db";
+    var mauNen = theme?.MauNen ?? "#f1f5f9";
 }
 
 <!DOCTYPE html>
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản trị hệ thống | Smart Warehouse</title>
+    <title>Quản trị hệ thống | @tenCuaHang</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         :root {
-            --primary: #2c3e50;
+            /* BIẾN ĐỘNG THEO DB */
+            --primary: @mauChuDao;
+            --accent: @mauNhan;
+            --bg-body: @mauNen;
             --secondary: #34495e;
-            --accent: #3498db;
-            --bg-body: #f1f5f9;
-            --card-bg: #ffffff;
             --text-main: #334155;
             --text-muted: #64748b;
             --border-radius: 16px;
+            /* [MỚI] BIẾN TRONG SUỐT ĐỂ CÁC BẢNG HÒA VÀO NỀN */
+            --border-soft: rgba(0, 0, 0, 0.08); /* Viền trong suốt */
+            --bg-hover: rgba(0, 0, 0, 0.04); /* Nền bóng mờ */
         }
 
         body {
@@ -43,13 +53,59 @@
             overflow: hidden;
         }
 
+        /* ==================================================================== */
+        /* [ĐÃ SỬA] ÉP TẤT CẢ CÁC BẢNG, CARD, MODAL DÙNG CHUNG MÀU NỀN (HÒA TAN)*/
+        /* ==================================================================== */
+        .card-custom, .stat-card, .modal-content, .sidebar {
+            background-color: var(--bg-body) !important;
+        }
+
+        /* Ghi đè các tiện ích nền cứng của Bootstrap */
+        .bg-white {
+            background-color: var(--bg-body) !important;
+        }
+
+        .bg-light {
+            background-color: var(--bg-hover) !important;
+        }
+
+        /* Đổi tất cả các đường viền cứng thành viền mờ ảo */
+        .sidebar, .sidebar-footer, .card-header-custom, .card-custom, .stat-card,
+        .border, .border-bottom, .border-top, .border-end {
+            border-color: var(--border-soft) !important;
+        }
+
+        /* ==================================================================== */
+        /* TÙY CHỈNH BẢNG (TABLE) */
+        /* ==================================================================== */
+        .table-custom th {
+            background-color: var(--bg-hover) !important;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-soft) !important;
+        }
+
+        .table-custom td {
+            padding: 15px 20px;
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-soft) !important;
+            color: var(--text-main);
+            font-size: 0.95rem;
+        }
+
+        .table-custom tr:hover td {
+            background-color: var(--bg-hover) !important;
+        }
+
         /* SIDEBAR */
         .sidebar {
             width: 280px;
-            background: var(--card-bg);
             height: 100vh;
             position: fixed;
-            border-right: 1px solid #e2e8f0;
+            border-right: 1px solid var(--border-soft);
             display: flex;
             flex-direction: column;
             z-index: 1000;
@@ -100,7 +156,7 @@
             }
 
             .nav-link:hover {
-                background-color: #f8fafc;
+                background-color: var(--bg-hover);
                 color: var(--accent);
             }
 
@@ -109,18 +165,19 @@
                 }
 
             .nav-link.active {
-                background-color: rgba(52, 152, 219, 0.1);
-                color: var(--accent);
+                background-color: var(--primary);
+                color: white;
                 font-weight: 600;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
             }
 
                 .nav-link.active i {
-                    color: var(--accent);
+                    color: white;
                 }
 
         .sidebar-footer {
             padding: 20px;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid var(--border-soft);
         }
 
         .user-profile {
@@ -128,7 +185,7 @@
             align-items: center;
             gap: 12px;
             padding: 10px;
-            background: #f8fafc;
+            background-color: var(--bg-hover);
             border-radius: 12px;
         }
 
@@ -172,11 +229,8 @@
             margin-top: 5px;
         }
 
-        /* CARDS & STATS */
         .card-custom {
-            background: var(--card-bg);
             border-radius: var(--border-radius);
-            border: none;
             box-shadow: 0 4px 20px rgba(0,0,0,0.02);
             margin-bottom: 24px;
             overflow: hidden;
@@ -185,7 +239,6 @@
 
         .card-header-custom {
             padding: 20px 25px;
-            border-bottom: 1px solid #f1f5f9;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -203,14 +256,12 @@
         }
 
         .stat-card {
-            background: white;
             padding: 20px;
             border-radius: 16px;
             display: flex;
             align-items: center;
             gap: 20px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-            border: 1px solid #f1f5f9;
         }
 
         .stat-icon {
@@ -253,29 +304,7 @@
             font-weight: 500;
         }
 
-        /* TABLE & BADGES */
-        .table-custom th {
-            background: #f8fafc;
-            color: var(--text-muted);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 0.75rem;
-            padding: 15px 20px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        .table-custom td {
-            padding: 15px 20px;
-            vertical-align: middle;
-            border-bottom: 1px solid #f1f5f9;
-            color: var(--text-main);
-            font-size: 0.95rem;
-        }
-
-        .table-custom tr:hover td {
-            background-color: #f8fafc;
-        }
-
+        /* BADGES */
         .badge-soft {
             padding: 6px 12px;
             border-radius: 30px;
@@ -304,27 +333,31 @@
         }
 
         .badge-soft-secondary {
-            background: #f1f5f9;
-            color: #475569;
+            background: var(--bg-hover);
+            color: var(--text-muted);
+        }
+
+        /* NÚT & FORM */
+        .btn-action, .btn-light {
+            border-radius: 8px;
+            border: 1px solid var(--border-soft) !important;
+            background-color: var(--bg-body) !important;
+            color: var(--text-muted);
+            transition: 0.2s;
         }
 
         .btn-action {
             width: 32px;
             height: 32px;
-            border-radius: 8px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            border: 1px solid #e2e8f0;
-            background: white;
-            color: var(--text-muted);
-            transition: 0.2s;
         }
 
-            .btn-action:hover {
-                background: #f1f5f9;
+            .btn-action:hover, .btn-light:hover {
+                background-color: var(--bg-hover) !important;
                 color: var(--primary);
-                border-color: #cbd5e1;
+                border-color: var(--border-soft) !important;
             }
 
         .btn-primary {
@@ -337,12 +370,11 @@
         }
 
             .btn-primary:hover {
-                background-color: #1e2b37;
+                opacity: 0.9;
                 transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(44, 62, 80, 0.2);
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             }
 
-        /* FORM & HELPERS */
         .form-label {
             font-weight: 600;
             font-size: 0.9rem;
@@ -353,35 +385,37 @@
         .form-control, .form-select {
             padding: 12px 15px;
             border-radius: 10px;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-soft) !important;
             font-size: 0.95rem;
-            background-color: #fff;
+            background-color: var(--bg-body) !important;
+            color: var(--text-main);
         }
 
             .form-control:focus, .form-select:focus {
-                border-color: var(--accent);
+                border-color: var(--accent) !important;
                 box-shadow: 0 0 0 4px rgba(52, 152, 219, 0.1);
+                background-color: var(--bg-body) !important;
             }
 
         .role-option, .role-option-modal {
             cursor: pointer;
-            border: 1px solid #e2e8f0;
+            border: 1px solid var(--border-soft);
             padding: 15px;
             border-radius: 12px;
             transition: 0.2s;
-            background: white;
+            background-color: var(--bg-body);
             height: 100%;
             display: block;
         }
 
             .role-option:hover, .role-option-modal:hover {
                 border-color: var(--accent);
-                background: #f0f9ff;
+                background-color: var(--bg-hover);
             }
 
             .role-option.selected, .role-option-modal.selected {
                 border-color: var(--accent);
-                background: #e0f2fe;
+                background-color: var(--bg-hover);
                 position: relative;
             }
 
@@ -401,7 +435,6 @@
             filter: grayscale(1);
         }
 
-        /* [NEW] NOTIFICATION BELL STYLE */
         .notification-btn {
             position: relative;
             cursor: pointer;
@@ -412,10 +445,12 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            background-color: var(--bg-body) !important;
+            border: 1px solid var(--border-soft) !important;
         }
 
             .notification-btn:hover {
-                background-color: #f1f5f9;
+                background-color: var(--bg-hover) !important;
                 color: var(--accent) !important;
                 transform: scale(1.05);
             }
@@ -434,7 +469,7 @@
             border: 2px solid white;
             font-weight: bold;
             animation: pulse 2s infinite;
-            display: none; /* Mặc định ẩn, JS sẽ hiện */
+            display: none;
         }
 
         @@keyframes pulse {
@@ -450,16 +485,24 @@
                 transform: scale(1);
             }
         }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-soft);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-soft);
+        }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="sidebar-header"><div class="brand-text"><i class="fas fa-cubes me-2 text-primary"></i>SmartWarehouse</div></div>
+        <div class="sidebar-header"><div class="brand-text"><i class="fas fa-cubes me-2 text-primary"></i>@tenCuaHang</div></div>
         <div class="sidebar-menu">
             <div class="nav flex-column nav-pills" role="tablist">
                 <div class="nav-label">Hệ thống</div>
-                <a class="nav-link active" data-bs-toggle="pill" href="#tab-interface"><i class="fas fa-desktop"></i> Cấu hình Giao diện</a>
+                <a class="nav-link active" data-bs-toggle="pill" href="#tab-interface"><i class="fas fa-palette"></i> Cấu hình Giao diện</a>
                 <a class="nav-link" data-bs-toggle="pill" href="#tab-info"><i class="fas fa-building"></i> Thông tin Doanh nghiệp</a>
                 <a class="nav-link" data-bs-toggle="pill" href="#tab-backup"><i class="fas fa-database"></i> Sao lưu Dữ liệu</a>
                 <div class="nav-label">Nhân sự</div>
@@ -471,7 +514,7 @@
         </div>
         <div class="sidebar-footer">
             <div class="user-profile">
-                <div class="avatar-circle bg-primary">A</div>
+                <div class="avatar-circle" style="background-color: var(--accent)">A</div>
                 <div style="flex: 1; overflow: hidden;"><div class="fw-bold text-truncate" style="font-size: 0.9rem;">@Context.Session.GetString("HoTen")</div><div class="text-success small fw-bold"><i class="fas fa-circle" style="font-size: 8px;"></i> Online</div></div>
                 <a href="/Home/Logout" class="btn btn-sm text-danger"><i class="fas fa-sign-out-alt"></i></a>
             </div>
@@ -480,9 +523,9 @@
 
     <div class="main-content">
         <div class="page-header">
-            <div><h1 class="page-title">Trang Quản Trị</h1><p class="page-subtitle">Chào mừng trở lại, hệ thống đang hoạt động ổn định.</p></div>
+            <div><h1 class="page-title">Trang Quản Trị</h1><p class="page-subtitle">Hệ thống đang hoạt động ổn định.</p></div>
             <div>
-                <button class="btn btn-light border bg-white shadow-sm notification-btn" onclick="handleNotificationClick()">
+                <button class="btn notification-btn shadow-sm" onclick="handleNotificationClick()">
                     <i class="far fa-bell text-muted" style="font-size: 1.2rem;"></i>
                     <span class="notification-badge" id="notifBadge">0</span>
                 </button>
@@ -499,62 +542,199 @@
         }
 
         <div class="tab-content">
+
             <div class="tab-pane fade show active" id="tab-interface">
-                <div class="card-custom"><div class="card-header-custom"><h5 class="card-title-custom">Cấu hình Giao diện</h5></div><div class="card-body-custom"><div class="row g-4"><div class="col-md-6"><label class="form-label">Logo Website</label><div class="p-4 border rounded-3 bg-light text-center mb-2"><img src="https://via.placeholder.com/150x50?text=LOGO" alt="Logo" style="max-height: 50px; opacity: 0.6;"></div><input type="file" class="form-control"></div><div class="col-md-6"><label class="form-label">Banner Trang chủ</label><div class="p-4 border rounded-3 bg-light text-center mb-2"><img src="https://via.placeholder.com/400x100?text=BANNER" alt="Banner" style="max-width: 100%; opacity: 0.6; border-radius: 8px;"></div><input type="file" class="form-control"></div><div class="col-12 text-end"><button class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu Thay Đổi</button></div></div></div></div>
+                <div class="card-custom">
+                    <div class="card-header-custom"><h5 class="card-title-custom"><i class="fas fa-magic me-2"></i>Cấu hình Giao diện & Thương hiệu</h5></div>
+                    <div class="card-body-custom">
+                        <form id="formThemeConfig" onsubmit="submitThemeConfig(event)">
+                            <div class="row g-4">
+                                <div class="col-md-12">
+                                    <label class="form-label">Tên Cửa Hàng (Hiển thị trên Menu & Báo cáo)</label>
+                                    <input type="text" class="form-control form-control-lg fw-bold text-primary" id="theme_TenCuaHang" value="@tenCuaHang" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Màu Chủ Đạo</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="color" class="form-control form-control-color p-1 me-3" id="theme_MauChuDao" value="@mauChuDao" title="Chọn màu chủ đạo" style="width: 80px; height: 50px;">
+                                        <input type="text" class="form-control" value="@mauChuDao" readonly style="width: 120px;">
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">Màu thanh công cụ, tiêu đề.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Màu Nhấn (Icon, Nút)</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="color" class="form-control form-control-color p-1 me-3" id="theme_MauNhan" value="@mauNhan" title="Chọn màu nhấn" style="width: 80px; height: 50px;">
+                                        <input type="text" class="form-control" value="@mauNhan" readonly style="width: 120px;">
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">Màu hiệu ứng nổi bật.</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label">Màu Nền Tích hợp Bảng</label>
+                                    <div class="d-flex align-items-center">
+                                        <input type="color" class="form-control form-control-color p-1 me-3" id="theme_MauNen" value="@mauNen" title="Chọn màu nền chung" style="width: 80px; height: 50px;">
+                                        <input type="text" class="form-control" value="@mauNen" readonly style="width: 120px;">
+                                    </div>
+                                    <small class="text-muted mt-2 d-block">Đổi màu Body, Menu trái và Các Bảng.</small>
+                                </div>
+
+                                <div class="col-12 mt-4 pt-3 border-top text-end">
+                                    <button type="submit" class="btn btn-primary px-4 py-2 fw-bold"><i class="fas fa-save me-2"></i>Lưu Cấu Hình</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
+
             <div class="tab-pane fade" id="tab-info">
-                <div class="card-custom"><div class="card-header-custom"><h5 class="card-title-custom">Thông tin Doanh nghiệp</h5></div><div class="card-body-custom"><form action="/Admin/SaveConfig" method="post"><div class="row g-3"><div class="col-md-6"><label class="form-label">Tên Công Ty</label><input type="text" class="form-control fw-bold" name="TenCongTy" value="@Model.CongTy?.TenCongTy"></div><div class="col-md-6"><label class="form-label">Mã Số Thuế</label><input type="text" class="form-control" name="MaSoThue" value="@Model.CongTy?.MaSoThue"></div><div class="col-md-6"><label class="form-label">Số Điện Thoại</label><input type="text" class="form-control" name="SoDienThoai" value="@Model.CongTy?.SoDienThoai"></div><div class="col-md-6"><label class="form-label">Email Liên Hệ</label><input type="text" class="form-control" name="Email" value="@Model.CongTy?.Email"></div><div class="col-12"><label class="form-label">Địa Chỉ Trụ Sở</label><input type="text" class="form-control" name="DiaChi" value="@Model.CongTy?.DiaChi"></div><div class="col-12 mt-4 pt-3 border-top d-flex justify-content-between align-items-center"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="ChoPhepBanHang" value="true" @(Model.CongTy?.ChoPhepBanHang == true ? "checked" : "") style="width: 40px; height: 20px;"><label class="form-check-label fw-bold ms-2 text-danger">Cho phép hệ thống hoạt động</label></div><button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Cập Nhật</button></div></div></form></div></div>
+                <div class="card-custom">
+                    <div class="card-header-custom"><h5 class="card-title-custom">Thông tin Doanh nghiệp</h5></div>
+                    <div class="card-body-custom">
+                        <form action="/Admin/SaveConfig" method="post">
+                            <div class="row g-3">
+                                <div class="col-md-6"><label class="form-label">Tên Công Ty</label><input type="text" class="form-control fw-bold" name="TenCongTy" value="@Model.CongTy?.TenCongTy"></div>
+                                <div class="col-md-6"><label class="form-label">Mã Số Thuế</label><input type="text" class="form-control" name="MaSoThue" value="@Model.CongTy?.MaSoThue"></div>
+                                <div class="col-md-6"><label class="form-label">Số Điện Thoại</label><input type="text" class="form-control" name="SoDienThoai" value="@Model.CongTy?.SoDienThoai"></div>
+                                <div class="col-md-6"><label class="form-label">Email Liên Hệ</label><input type="text" class="form-control" name="Email" value="@Model.CongTy?.Email"></div>
+                                <div class="col-12"><label class="form-label">Địa Chỉ Trụ Sở</label><input type="text" class="form-control" name="DiaChi" value="@Model.CongTy?.DiaChi"></div>
+                                <div class="col-12 mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                                    <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="ChoPhepBanHang" value="true" @(Model.CongTy?.ChoPhepBanHang == true ? "checked" : "") style="width: 40px; height: 20px;"><label class="form-check-label fw-bold ms-2 text-danger">Cho phép hệ thống hoạt động</label></div>
+                                    <button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Cập Nhật</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
+
             <div class="tab-pane fade" id="tab-list-users">
-                <div class="row g-4 mb-4"><div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-blue-soft"><i class="fas fa-users"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count ?? 0)</h3><p>Tổng nhân viên</p></div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-green-soft"><i class="fas fa-user-check"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count(u => u.TrangThai == true) ?? 0)</h3><p>Đang hoạt động</p></div></div></div><div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-purple-soft"><i class="fas fa-user-shield"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count(u => u.VaiTro == "Admin") ?? 0)</h3><p>Quản trị viên</p></div></div></div></div>
-                <div class="card-custom"><div class="card-header-custom"><h5 class="card-title-custom">Danh sách Tài khoản</h5><button class="btn btn-primary btn-sm" onclick="switchToCreateUser()"><i class="fas fa-plus me-1"></i> Thêm mới</button></div><div class="table-responsive"><table class="table-custom"><thead><tr><th class="ps-4">Nhân viên</th><th>ID</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end pe-4">Thao tác</th></tr></thead><tbody>@if (Model.DanhSachNhanVien != null) { foreach (var u in Model.DanhSachNhanVien) { bool isActive = u.TrangThai == true; string roleBadge = u.VaiTro == "Admin" ? "badge-soft-danger" : (u.VaiTro == "Owner" ? "badge-soft-primary" : (u.VaiTro == "Sale" ? "badge-soft-info" : "badge-soft-secondary")); string initials = GetInitials(u.HoTen); string bgAvatar = avatarColors[new Random().Next(avatarColors.Length)];
-                <tr class="@(isActive ? "" : "opacity-75")"><td class="ps-4"><div class="d-flex align-items-center"><div class="avatar-circle @bgAvatar me-3 text-white small" style="width: 35px; height: 35px;">@initials</div><div><div class="fw-bold text-dark">@u.HoTen</div><div class="small text-muted">@u.TenDangNhap</div></div></div></td><td class="text-muted small">@u.MaND</td><td><span class="badge-soft @roleBadge">@u.VaiTro</span></td><td>@if (isActive) {
-                <span class="badge-soft badge-soft-success">Active</span>
-                                } else
-                {
+                <div class="row g-4 mb-4">
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-blue-soft"><i class="fas fa-users"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count ?? 0)</h3><p>Tổng nhân viên</p></div></div></div>
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-green-soft"><i class="fas fa-user-check"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count(u => u.TrangThai == true) ?? 0)</h3><p>Đang hoạt động</p></div></div></div>
+                    <div class="col-md-4"><div class="stat-card"><div class="stat-icon bg-purple-soft"><i class="fas fa-user-shield"></i></div><div class="stat-info"><h3>@(Model.DanhSachNhanVien?.Count(u => u.VaiTro == "Admin") ?? 0)</h3><p>Quản trị viên</p></div></div></div>
+                </div>
+                <div class="card-custom">
+                    <div class="card-header-custom"><h5 class="card-title-custom">Danh sách Tài khoản</h5><button class="btn btn-primary btn-sm" onclick="switchToCreateUser()"><i class="fas fa-plus me-1"></i> Thêm mới</button></div>
+                    <div class="table-responsive">
+                        <table class="table-custom w-100">
+                            <thead><tr><th class="ps-4">Nhân viên</th><th>ID</th><th>Vai trò</th><th>Trạng thái</th><th class="text-end pe-4">Thao tác</th></tr></thead>
+                            <tbody>
+                                @if (Model.DanhSachNhanVien != null)
+                                {
+                                    foreach (var u in Model.DanhSachNhanVien)
+                                    {
+                                        bool isActive = u.TrangThai == true; string roleBadge = u.VaiTro == "Admin" ? "badge-soft-danger" : (u.VaiTro == "Owner" ? "badge-soft-primary" : (u.VaiTro == "Sale" ? "badge-soft-info" : "badge-soft-secondary")); string initials = GetInitials(u.HoTen); string bgAvatar = avatarColors[new Random().Next(avatarColors.Length)];
+                                        <tr class="@(isActive ? "" : "opacity-75")">
+                                            <td class="ps-4"><div class="d-flex align-items-center"><div class="avatar-circle @bgAvatar me-3 text-white small" style="width: 35px; height: 35px;">@initials</div><div><div class="fw-bold text-dark">@u.HoTen</div><div class="small text-muted">@u.TenDangNhap</div></div></div></td>
+                                            <td class="text-muted small">@u.MaND</td>
+                                            <td><span class="badge-soft @roleBadge">@u.VaiTro</span></td>
+                                            <td>@if (isActive) {
+                                            <span class="badge-soft badge-soft-success">Active</span>
+                                        } else
+                                        {
 
-                    <span class="badge-soft badge-soft-secondary">Paused</span>
-                }
-</td><td class="text-end pe-4"><button class="btn-action me-1" onclick="openEditModal('@u.MaND', '@u.TenDangNhap', '@u.HoTen', '@u.VaiTro', '@u.MaNhomQuyen', '@u.Email', @(isActive.ToString().ToLower()))"><i class="fas fa-pen"></i></button>@if (u.MaND == currentUserId || u.TenDangNhap.ToLower() == "admin") {
-                <button class="btn-action" disabled style="opacity: 0.5;"><i class="fas fa-trash"></i></button>
-                                } else
-                {
+                                            <span class="badge-soft badge-soft-secondary">Paused</span>
+                                        }
+    </td>
+                                        <td class="text-end pe-4">
+                                            <button class="btn-action me-1" onclick="openEditModal('@u.MaND', '@u.TenDangNhap', '@u.HoTen', '@u.VaiTro', '@u.MaNhomQuyen', '@u.Email', @(isActive.ToString().ToLower()))"><i class="fas fa-pen"></i></button>
+                                            @if (u.MaND == currentUserId || u.TenDangNhap.ToLower() == "admin")
+                                            {
+                                                <button class="btn-action" disabled style="opacity: 0.5;"><i class="fas fa-trash"></i></button>
+                                            }
+                                            else
+                                            {
 
-                    <button class="btn-action text-danger" onclick="openDeleteModal('@u.MaND', '@u.HoTen')"><i class="fas fa-trash"></i></button>
-                }
-</td></tr>
+                                                <button class="btn-action text-danger" onclick="openDeleteModal('@u.MaND', '@u.HoTen')"><i class="fas fa-trash"></i></button>
+                                            }
+                                        </td>
+                                    </tr>
                                 }}
-</tbody></table></div></div>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-            <div class="tab-pane fade" id="tab-config-user">
-                <div class="card-custom"><div class="card-header-custom"><h5 class="card-title-custom">Thêm Tài khoản Mới</h5></div><div class="card-body-custom"><form action="/Admin/SaveUser" method="post"><input type="hidden" name="MaND" id="inputMaND"><div class="row g-4"><div class="col-md-6 border-end pe-4"><div class="mb-3"><label class="form-label">Loại tài khoản <span class="text-danger">*</span></label><select class="form-select form-select-lg bg-light" name="VaiTro" id="selectVaiTro" required onchange="autoSelectPermission(this.value)"><option value="">-- Chọn Vai Trò --</option><option value="Admin">Admin (Quản trị)</option><option value="Owner">Owner (Chủ shop)</option><option value="Sale">Sale (Bán hàng)</option><option value="Kho">Kho (Thủ kho)</option></select></div><div class="mb-3"><div class="p-3 bg-light rounded-3 d-flex align-items-center"><div class="form-check form-switch"><input type="hidden" name="HienThi" value="false"><input class="form-check-input" type="checkbox" name="HienThi" value="true" checked style="width: 45px; height: 22px; cursor: pointer;"><label class="form-check-label fw-bold text-success ms-3 pt-1">Kích hoạt ngay</label></div></div></div></div><div class="col-md-6 ps-4"><div class="row g-3"><div class="col-6"><label class="form-label">Tên đăng nhập</label><input type="text" class="form-control" name="TenDangNhap" id="inputTenDangNhap" placeholder="vui lòng nhập tên" required></div><div class="col-6"><label class="form-label">Họ và tên</label><input type="text" class="form-control" name="HoTen" id="inputHoTen" placeholder="vui lòng nhập họ tên" required></div><div class="col-6"><label class="form-label">Email (Khôi phục)</label><input type="email" class="form-control" name="Email" id="inputEmail" placeholder="example@gmail.com"required></div><div class="col-6"><label class="form-label">Mật khẩu</label><input type="password" class="form-control" name="MatKhau" placeholder="********"></div><div class="col-12"><label class="form-label mb-2">Quyền hạn hệ thống:</label><div class="row g-2 locked-section">@if (ViewBag.DanhSachQuyen != null) { foreach (var q in ViewBag.DanhSachQuyen as List<Core.Entities.NhomQuyen>) {
-                <div class="col-6"><label class="role-option" id="box_@q.MaNhomQuyen" onclick="selectRole('@q.MaNhomQuyen')"><div class="d-flex align-items-center"><input type="radio" name="MaNhomQuyen" value="@q.MaNhomQuyen" class="form-check-input me-2" id="radio_@q.MaNhomQuyen"><div><div class="fw-bold text-dark" style="font-size: 0.9rem;">@q.TenNhomQuyen</div></div></div></label></div>
-                                } }
-</div></div><div class="col-12 mt-4 text-end"><button type="button" class="btn btn-light border me-2" onclick="switchToUserList()">Hủy</button><button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu Tài Khoản</button></div></div></div></div></form></div></div>
-            </div>
-            <div class="tab-pane fade" id="tab-logs">
-                <div class="card-custom"><div class="card-header-custom"><h5 class="card-title-custom">Nhật ký Hoạt động</h5><button class="btn btn-light btn-sm border" onclick="location.reload()"><i class="fas fa-sync"></i></button></div><div class="table-responsive"><table class="table-custom"><thead><tr><th class="ps-4">Thời gian</th><th>Người thực hiện</th><th>Hành động</th></tr></thead><tbody>@if (Model.LichSu != null) { foreach (var log in Model.LichSu) {
-                <tr><td class="ps-4 text-muted">@log.ThoiGian.ToString("dd/MM HH:mm")</td><td class="fw-bold text-primary">@log.NguoiThucHien</td><td>@log.HanhDong</td></tr>
-                                }} else
-                {
 
-                    <tr><td colspan="3" class="text-center py-4">Chưa có nhật ký.</td></tr>
-                }
-</tbody></table></div></div>
+            <div class="tab-pane fade" id="tab-config-user">
+                <div class="card-custom">
+                    <div class="card-header-custom"><h5 class="card-title-custom">Thêm Tài khoản Mới</h5></div>
+                    <div class="card-body-custom">
+                        <form action="/Admin/SaveUser" method="post">
+                            <input type="hidden" name="MaND" id="inputMaND">
+                            <div class="row g-4">
+                                <div class="col-md-6 border-end pe-4">
+                                    <div class="mb-3"><label class="form-label">Loại tài khoản <span class="text-danger">*</span></label><select class="form-select form-select-lg bg-light" name="VaiTro" id="selectVaiTro" required onchange="autoSelectPermission(this.value)"><option value="">-- Chọn Vai Trò --</option><option value="Admin">Admin (Quản trị)</option><option value="Owner">Owner (Chủ shop)</option><option value="Sale">Sale (Bán hàng)</option><option value="Kho">Kho (Thủ kho)</option></select></div>
+                                    <div class="mb-3"><div class="p-3 bg-light rounded-3 d-flex align-items-center"><div class="form-check form-switch"><input type="hidden" name="HienThi" value="false"><input class="form-check-input" type="checkbox" name="HienThi" value="true" checked style="width: 45px; height: 22px; cursor: pointer;"><label class="form-check-label fw-bold text-success ms-3 pt-1">Kích hoạt ngay</label></div></div></div>
+                                </div>
+                                <div class="col-md-6 ps-4">
+                                    <div class="row g-3">
+                                        <div class="col-6"><label class="form-label">Tên đăng nhập</label><input type="text" class="form-control" name="TenDangNhap" id="inputTenDangNhap" placeholder="vui lòng nhập tên" required></div>
+                                        <div class="col-6"><label class="form-label">Họ và tên</label><input type="text" class="form-control" name="HoTen" id="inputHoTen" placeholder="vui lòng nhập họ tên" required></div>
+                                        <div class="col-6"><label class="form-label">Email (Khôi phục)</label><input type="email" class="form-control" name="Email" id="inputEmail" placeholder="example@gmail.com" required></div>
+                                        <div class="col-6"><label class="form-label">Mật khẩu</label><input type="password" class="form-control" name="MatKhau" placeholder="********"></div>
+                                        <div class="col-12">
+                                            <label class="form-label mb-2">Quyền hạn hệ thống:</label>
+                                            <div class="row g-2 locked-section">
+                                                @if (ViewBag.DanhSachQuyen != null)
+                                                {
+                                                    foreach (var q in ViewBag.DanhSachQuyen as List<Core.Entities.NhomQuyen>)
+                                                    {
+                                                        <div class="col-6"><label class="role-option" id="box_@q.MaNhomQuyen" onclick="selectRole('@q.MaNhomQuyen')"><div class="d-flex align-items-center"><input type="radio" name="MaNhomQuyen" value="@q.MaNhomQuyen" class="form-check-input me-2" id="radio_@q.MaNhomQuyen"><div><div class="fw-bold text-dark" style="font-size: 0.9rem;">@q.TenNhomQuyen</div></div></div></label></div>
+                                                    }
+                                                }
+                                            </div>
+                                        </div>
+                                        <div class="col-12 mt-4 text-end"><button type="button" class="btn btn-light me-2" onclick="switchToUserList()">Hủy</button><button type="submit" class="btn btn-primary"><i class="fas fa-save me-2"></i>Lưu Tài Khoản</button></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
+
+            <div class="tab-pane fade" id="tab-logs">
+                <div class="card-custom">
+                    <div class="card-header-custom"><h5 class="card-title-custom">Nhật ký Hoạt động</h5><button class="btn btn-light btn-sm border" onclick="location.reload()"><i class="fas fa-sync"></i></button></div>
+                    <div class="table-responsive">
+                        <table class="table-custom w-100">
+                            <thead><tr><th class="ps-4">Thời gian</th><th>Người thực hiện</th><th>Hành động</th></tr></thead>
+                            <tbody>
+                                @if (Model.LichSu != null)
+                                {
+                                    foreach (var log in Model.LichSu)
+                                    {
+                                        <tr><td class="ps-4 text-muted">@log.ThoiGian.ToString("dd/MM HH:mm")</td><td class="fw-bold text-primary">@log.NguoiThucHien</td><td>@log.HanhDong</td></tr>
+                                    }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="3" class="text-center py-4">Chưa có nhật ký.</td></tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
             <div class="tab-pane fade" id="tab-backup">
                 <div class="card-custom text-center p-5"><div class="mb-3 text-primary" style="font-size: 3rem;"><i class="fas fa-database"></i></div><h4 class="fw-bold text-dark">Sao lưu Dữ liệu</h4><p class="text-muted mb-4">Tải về bản sao lưu SQL định kỳ để đảm bảo an toàn dữ liệu.</p><a href="/Admin/BackupData" class="btn btn-primary px-4 py-2"><i class="fas fa-download me-2"></i>Tải bản Backup</a></div>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="editUserModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content border-0 shadow-lg" style="border-radius: 16px;"><div class="modal-header border-bottom-0 pb-0"><h5 class="modal-title fw-bold ms-2 mt-2">Cập nhật Thông tin</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><form action="/Admin/SaveUser" method="post" id="formEditUser"><input type="hidden" name="MaND" id="modal_MaND"><div class="row g-3"><div class="col-md-6"><label class="form-label">Tài khoản</label><input type="text" class="form-control bg-light" name="TenDangNhap" id="modal_TenDangNhap" readonly></div><div class="col-md-6"><label class="form-label">Họ tên</label><input type="text" class="form-control" name="HoTen" id="modal_HoTen" required></div><div class="col-12"><label class="form-label">Email</label><input type="email" class="form-control" name="Email" id="modal_Email" required></div><div class="col-md-6"><label class="form-label">Mật khẩu mới</label><input type="password" class="form-control" name="MatKhau" placeholder="Để trống nếu không đổi"></div><div class="col-md-6"><label class="form-label">Vai trò</label><select class="form-select" name="VaiTro" id="modal_VaiTro" onchange="autoSelectPermissionModal(this.value)"><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Sale">Sale</option><option value="Kho">Kho</option></select></div><div class="col-12"><div class="p-3 bg-light rounded-3 d-flex align-items-center justify-content-between"><div><div class="fw-bold">Trạng thái</div><small class="text-muted" id="statusDesc">Gạt sang trái để tạm dừng.</small></div><div class="form-check form-switch"><input type="hidden" name="HienThi" id="real_HienThi_Value" value="true"><input class="form-check-input" type="checkbox" role="switch" id="modal_TrangThai" style="width: 45px; height: 22px;"><label class="form-check-label fw-bold ms-2" id="label_TrangThai">Active</label></div></div></div><div class="d-none">@if(ViewBag.DanhSachQuyen!=null){foreach(var q in ViewBag.DanhSachQuyen as List<Core.Entities.NhomQuyen>){
+    <div class="modal fade" id="editUserModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header pb-0"><h5 class="modal-title fw-bold ms-2 mt-2">Cập nhật Thông tin</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body p-4"><form action="/Admin/SaveUser" method="post" id="formEditUser"><input type="hidden" name="MaND" id="modal_MaND"><div class="row g-3"><div class="col-md-6"><label class="form-label">Tài khoản</label><input type="text" class="form-control bg-light" name="TenDangNhap" id="modal_TenDangNhap" readonly></div><div class="col-md-6"><label class="form-label">Họ tên</label><input type="text" class="form-control" name="HoTen" id="modal_HoTen" required></div><div class="col-12"><label class="form-label">Email</label><input type="email" class="form-control" name="Email" id="modal_Email" required></div><div class="col-md-6"><label class="form-label">Mật khẩu mới</label><input type="password" class="form-control" name="MatKhau" placeholder="Để trống nếu không đổi"></div><div class="col-md-6"><label class="form-label">Vai trò</label><select class="form-select" name="VaiTro" id="modal_VaiTro" onchange="autoSelectPermissionModal(this.value)"><option value="Admin">Admin</option><option value="Owner">Owner</option><option value="Sale">Sale</option><option value="Kho">Kho</option></select></div><div class="col-12"><div class="p-3 bg-light rounded-3 d-flex align-items-center justify-content-between"><div><div class="fw-bold">Trạng thái</div><small class="text-muted" id="statusDesc">Gạt sang trái để tạm dừng.</small></div><div class="form-check form-switch"><input type="hidden" name="HienThi" id="real_HienThi_Value" value="true"><input class="form-check-input" type="checkbox" role="switch" id="modal_TrangThai" style="width: 45px; height: 22px;"><label class="form-check-label fw-bold ms-2" id="label_TrangThai">Active</label></div></div></div><div class="d-none">@if(ViewBag.DanhSachQuyen!=null){foreach(var q in ViewBag.DanhSachQuyen as List<Core.Entities.NhomQuyen>){
     <input type="radio" name="MaNhomQuyen" value="@q.MaNhomQuyen" id="modal_radio_@q.MaNhomQuyen">
         }}
-</div></div><div class="text-end mt-4"><button type="button" class="btn btn-light border me-2" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu Cập Nhật</button></div></form></div></div></div></div>
-    <div class="modal fade" id="deleteUserModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content border-0 shadow-lg" style="border-radius: 16px;"><div class="modal-body text-center p-5"><div class="mb-3 text-danger display-4"><i class="fas fa-exclamation-circle"></i></div><h4 class="fw-bold">Xác nhận Xóa?</h4><p class="text-muted mb-4">Hành động này sẽ xóa vĩnh viễn nhân viên <strong id="deleteUserName" class="text-dark"></strong>.</p><div class="d-flex justify-content-center gap-2"><button class="btn btn-light border px-4" data-bs-dismiss="modal">Không</button><form action="/Admin/DeleteUser" method="post"><input type="hidden" name="id" id="deleteUserId"><button class="btn btn-danger px-4">Xóa Ngay</button></form></div></div></div></div></div>
+</div></div><div class="text-end mt-4"><button type="button" class="btn btn-light me-2" data-bs-dismiss="modal">Hủy</button><button type="submit" class="btn btn-primary">Lưu Cập Nhật</button></div></form></div></div></div></div>
+
+    <div class="modal fade" id="deleteUserModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body text-center p-5"><div class="mb-3 text-danger display-4"><i class="fas fa-exclamation-circle"></i></div><h4 class="fw-bold">Xác nhận Xóa?</h4><p class="text-muted mb-4">Hành động này sẽ xóa vĩnh viễn nhân viên <strong id="deleteUserName" class="text-dark"></strong>.</p><div class="d-flex justify-content-center gap-2"><button class="btn btn-light px-4" data-bs-dismiss="modal">Không</button><form action="/Admin/DeleteUser" method="post"><input type="hidden" name="id" id="deleteUserId"><button class="btn btn-danger px-4">Xóa Ngay</button></form></div></div></div></div></div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             // Logic Tab
@@ -567,21 +747,60 @@
             }
             document.querySelectorAll('a[data-bs-toggle="pill"]').forEach(t => t.addEventListener('shown.bs.tab', e => localStorage.setItem('adminActiveTab', e.target.getAttribute('href'))));
 
-            // [LOGIC MỚI: KIỂM TRA THÔNG BÁO]
             checkNotifications();
+
+            // Xử lý live-preview khi Admin đổi màu trong bảng chọn màu
+            var colorChuDao = document.getElementById('theme_MauChuDao');
+            if(colorChuDao) colorChuDao.addEventListener('input', function() { document.documentElement.style.setProperty('--primary', this.value); });
+            var colorNhan = document.getElementById('theme_MauNhan');
+            if(colorNhan) colorNhan.addEventListener('input', function() { document.documentElement.style.setProperty('--accent', this.value); });
+
+            // Live-preview thay cả màu Body, Card, Bảng và Sidebar chung
+            var colorNen = document.getElementById('theme_MauNen');
+            if(colorNen) colorNen.addEventListener('input', function() {
+                document.documentElement.style.setProperty('--bg-body', this.value);
+            });
         });
 
-        // 1. Lấy tổng số dòng nhật ký từ Server
+        // =========================================================
+        // HÀM GỬI LƯU CẤU HÌNH GIAO DIỆN (ĐÃ GỘP MÀU NỀN & SIDEBAR LÀM 1)
+        // =========================================================
+        function submitThemeConfig(event) {
+            event.preventDefault();
+
+            var payload = {
+                TenCuaHang: document.getElementById('theme_TenCuaHang').value,
+                MauChuDao: document.getElementById('theme_MauChuDao').value,
+                MauNhan: document.getElementById('theme_MauNhan').value,
+                MauNen: document.getElementById('theme_MauNen').value,
+                MauSidebar: document.getElementById('theme_MauNen').value // Ném chung giá trị xuống Database
+            };
+
+            Swal.fire({ title: 'Đang áp dụng...', didOpen: () => Swal.showLoading() });
+
+            fetch('/Admin/SaveThemeConfigAPI', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    Swal.fire('Thành công!', 'Hệ thống đã khoác áo mới!', 'success').then(() => location.reload());
+                } else {
+                    Swal.fire("Lỗi", data.msg, "error");
+                }
+            }).catch(() => Swal.fire("Lỗi mạng", "Không kết nối được server", "error"));
+        }
+
+        // =========================================================
+        // CÁC HÀM CŨ GIỮ NGUYÊN 100%
+        // =========================================================
         var totalServerLogs = @currentTotalLogs;
 
         function checkNotifications() {
-            // 2. Lấy số dòng đã xem lần cuối từ LocalStorage
             var lastSeenLogs = parseInt(localStorage.getItem('adminLastSeenLogs')) || 0;
             var unreadCount = totalServerLogs - lastSeenLogs;
 
             var badge = document.getElementById('notifBadge');
-
-            // 3. Nếu có tin mới (Server > LocalStorage) => Hiện số đỏ
             if (unreadCount > 0) {
                 badge.innerText = unreadCount > 99 ? '99+' : unreadCount;
                 badge.style.display = 'inline-block';
@@ -590,17 +809,11 @@
             }
         }
 
-        // 4. Khi bấm vào chuông
         function handleNotificationClick() {
-            // Chuyển sang Tab Logs
             var tab = new bootstrap.Tab(document.querySelector('#link-tab-logs'));
             tab.show();
-
-            // Xóa số đỏ ngay lập tức
             var badge = document.getElementById('notifBadge');
             badge.style.display = 'none';
-
-            // Cập nhật lại LocalStorage = Tổng số hiện tại
             localStorage.setItem('adminLastSeenLogs', totalServerLogs);
         }
 

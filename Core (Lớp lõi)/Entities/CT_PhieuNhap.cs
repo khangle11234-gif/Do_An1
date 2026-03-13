@@ -14,7 +14,7 @@ namespace Core.Entities
         public int Id { get; set; }
 
         [Key, Column(Order = 1)]
-        [StringLength(10)]
+        [StringLength(50)]
         public string MaSP { get; set; }
 
 

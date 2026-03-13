@@ -186,17 +186,17 @@ namespace Presentation.Controllers
         }
 
         // ============================================================
-        // [ĐÃ SỬA] ĐIỀU HƯỚNG PHÂN QUYỀN ĐĂNG NHẬP
+        // [ĐÃ SỬA CHUẨN] ĐIỀU HƯỚNG PHÂN QUYỀN ĐĂNG NHẬP (AUTO-ROUTING)
         // ============================================================
         private IActionResult RedirectBasedOnRole(string role)
         {
             if (role == "Admin") return RedirectToAction("Index", "Admin");
-
-            // Đổi đường dẫn của Boss sang nhà mới
             if (role == "Owner") return RedirectToAction("Index", "Owner");
 
-            if (role == "Sale") return RedirectToAction("SalesDashboard");
-            if (role == "Kho") return RedirectToAction("WarehouseDashboard");
+            // Tự động đá Sale và Kho về đúng Controller của nó
+            if (role == "Sale") return RedirectToAction("Index", "Sale");
+            if (role == "Kho") return RedirectToAction("Index", "Kho");
+
             return RedirectToAction("Dashboard");
         }
 
@@ -206,10 +206,7 @@ namespace Presentation.Controllers
             return RedirectToAction("Index");
         }
 
-        // (Đã dọn dẹp hàm EmployeeManager() vì đã chuyển sang OwnerController)
-
-        public IActionResult SalesDashboard() => View();
-        public IActionResult WarehouseDashboard() => View();
         public IActionResult Dashboard() => View();
+
     }
 }

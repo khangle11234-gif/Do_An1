@@ -26,6 +26,7 @@ builder.Services.AddScoped<ISaleService, SaleService>();
 // 4. Kích hoạt Session & MVC
 builder.Services.AddSession();
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR(); // Bật tính năng Real-time
 
 var app = builder.Build();
 
@@ -47,5 +48,6 @@ app.UseSession(); // Quan trọng
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+app.MapHub<Web.Hubs.StoreHub>("/storeHub"); // Định tuyến trạm phát sóng (Nhớ using Web.Hubs trên cùng nếu nó báo lỗi)
 
 app.Run();

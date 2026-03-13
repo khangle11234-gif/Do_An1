@@ -36,6 +36,7 @@ namespace Data.Context
         public DbSet<PhieuBaoHanh> PhieuBaoHanh { get; set; }
         public DbSet<Core.Entities.ThongTinCongTy> ThongTinCongTy { get; set; }
         public DbSet<Core.Entities.LichSuHeThong> LichSuHeThong { get; set; }
+        public DbSet<CauHinhHeThong> CauHinhHeThong { get; set; }
 
         // 4. Cấu hình kết nối (Chuỗi kết nối)
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
