@@ -7,7 +7,12 @@ using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using Web.Hubs;
+using CloudinaryDotNet;
+using CloudinaryDotNet.Actions;
+using Microsoft.AspNetCore.Http;
+using Microsoft.EntityFrameworkCore;
 
 namespace Presentation.Controllers
 {
@@ -174,35 +179,66 @@ namespace Presentation.Controllers
         // =========================================================
         // 2. [API] SỬA GIÁ TRỰC TIẾP KHÔNG TẢI LẠI TRANG (AJAX)
         // =========================================================
-       
+
         [HttpPost]
-        public IActionResult UpdateProductAPI([FromBody] Core.Entities.SanPham model)
+        public async Task<IActionResult> UpdateProductAPI([FromForm] SanPham model, IFormFile fileAnh)
         {
             try
             {
-                var sp = _context.SanPham.FirstOrDefault(x => x.MaSP == model.MaSP);
-                if (sp == null) return Json(new { success = false, msg = "Không tìm thấy mã sản phẩm!" });
+                // 1. Tìm sản phẩm cũ trong Database
+                var sp = _context.SanPham.Find(model.MaSP);
+                if (sp == null) return Json(new { success = false, msg = "Không tìm thấy sản phẩm" });
 
-                // Cập nhật các trường thông tin
+                // 2. Cập nhật các thông tin bằng chữ
                 sp.TenSP = model.TenSP;
                 sp.MaVach = model.MaVach;
-
-                // [ĐÂY RỒI NÈ BOSS: Dòng bốc thuốc chữa lỗi không lưu giá vốn]
                 sp.GiaNhap = model.GiaNhap;
-
                 sp.GiaBan = model.GiaBan;
+                sp.ThongSoChiTiet = model.ThongSoChiTiet; // Cập nhật Thông số
+                sp.ThoiGianBaoHanh = model.ThoiGianBaoHanh; // Cập nhật Bảo hành
 
-                // Nếu Boss có dùng Đơn vị tính hay Nhóm hàng thì để nguyên mấy dòng dưới của Boss nhé
-                // sp.DonViTinh = model.DonViTinh;
+                // 3. Xử lý Ảnh: Nếu Boss CÓ CHỌN ẢNH MỚI thì mới up lên mây và ghi đè
+                // 3. Xử lý Ảnh: Nếu Boss CÓ CHỌN ẢNH MỚI thì mới up lên mây và ghi đè
+                if (fileAnh != null && fileAnh.Length > 0)
+                {
+                    var account = new Account("ddcbcv9xr", "981353463765943", "I46YQxQcGr-Px6kxvnA9vwRTYRA");
+                    Cloudinary cloudinary = new Cloudinary(account);
 
-                _context.SanPham.Update(sp);
-                _context.SaveChanges();
+                    using (var stream = fileAnh.OpenReadStream())
+                    {
+                        var uploadParams = new ImageUploadParams()
+                        {
+                            File = new FileDescription(fileAnh.FileName, stream),
+                            Folder = "App_Kho_Hang"
+                            // TUI ĐÃ XÓA DÒNG PublicId ĐI ĐỂ CLOUDINARY TỰ ĐẶT TÊN CHUẨN MÀ KHÔNG BỊ LỖI
+                        };
 
-                return Json(new { success = true, msg = "Cập nhật thành công!" });
+                        var uploadResult = await cloudinary.UploadAsync(uploadParams);
+
+                        // --- BỘ GIÁP CHỐNG LỖI ---
+                        if (uploadResult.Error != null)
+                        {
+                            // Nếu Cloudinary dỗi, nó sẽ báo lỗi ra màn hình chứ không làm sập Web
+                            return Json(new { success = false, msg = "Cloudinary từ chối ảnh: " + uploadResult.Error.Message });
+                        }
+
+                        if (uploadResult.SecureUrl != null)
+                        {
+                            sp.HinhAnh = uploadResult.SecureUrl.ToString();
+                        }
+                    }
+                
+            }
+
+                // 4. Lưu vào Database
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, msg = "Đã cập nhật sản phẩm thành công!" });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, msg = "Lỗi C#: " + ex.Message });
+                string loiThatSu = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, msg = "Lỗi SQL: " + loiThatSu });
             }
         }
 
@@ -210,19 +246,28 @@ namespace Presentation.Controllers
         // 3. [API] BẬT/TẮT TRẠNG THÁI SẢN PHẨM BẰNG CÔNG TẮC
         // =========================================================
         [HttpPost]
-        public IActionResult ToggleProductStatusAPI([FromBody] ProductToggleRequest req)
+        // Đổi thành async Task<IActionResult> để dùng được bộ đàm
+        public async Task<IActionResult> ToggleProductStatusAPI([FromBody] JsonElement payload)
         {
             try
             {
-                var sp = _context.SanPham.Find(req.MaSP);
-                if (sp == null) return Json(new { success = false, msg = "Không tìm thấy sản phẩm!" });
+                // Đoạn lấy mã SP của Boss (tùy Boss đang parse kiểu gì, dưới đây là mẫu)
+                string maSP = payload.GetProperty("MaSP").GetString();
+                var sp = _context.SanPham.Find(maSP);
 
-                sp.TrangThai = !(sp.TrangThai ?? true);
+                if (sp != null)
+                {
+                    sp.TrangThai = !sp.TrangThai; // Đảo trạng thái
+                    _context.SaveChanges();
 
-                _context.SanPham.Update(sp);
-                _context.SaveChanges();
+                    // ========================================================
+                    // VŨ KHÍ BÍ MẬT: Bắn tín hiệu Real-time báo cho máy POS biết
+                    // ========================================================
+                    await _hubContext.Clients.All.SendAsync("ProductUpdated", sp.MaSP, sp.TenSP, sp.GiaBan, sp.TrangThai);
 
-                return Json(new { success = true, newStatus = sp.TrangThai });
+                    return Json(new { success = true, newStatus = sp.TrangThai });
+                }
+                return Json(new { success = false, msg = "Không tìm thấy sản phẩm" });
             }
             catch (Exception ex)
             {
@@ -847,23 +892,21 @@ namespace Presentation.Controllers
         // =========================================================
         // [API MỚI] XEM LỊCH SỬ PHIẾU NHẬP VÀ CHI TIẾT
         // =========================================================
+        // [API] XEM LỊCH SỬ PHIẾU NHẬP (TRẢ LẠI NGUYÊN BẢN GỐC - CHẠY MƯỢT 100%)
+        // =========================================================
         [HttpGet]
         public IActionResult GetImportHistoryAPI()
         {
             try
             {
-                // Gọi từ DbSet PhieuNhap (nếu DbSet của Boss tên khác thì sửa lại xíu nhé, VD: Phieu_Nhap)
+                // Đoạn này trả về y hệt hôm qua, không bọc ToList() bậy bạ nữa
                 var pnList = _context.PhieuNhap
                     .OrderByDescending(p => p.NgayNhap)
                     .Select(p => new
                     {
                         MaPN = p.MaPN,
-                        // 1. NgayNhap là DateTime (không rỗng) nên gọi .ToString() trực tiếp
-                        NgayNhap = p.NgayNhap.ToString("dd/MM/yyyy HH:mm"),
-
-                        // 2. TongTien là decimal (không rỗng) nên gọi thẳng, không dùng ?? 0m
+                        NgayNhap = p.NgayNhap,
                         TongTien = p.TongTien,
-
                         GhiChu = p.GhiChu
                     }).ToList();
 
@@ -875,41 +918,70 @@ namespace Presentation.Controllers
             }
         }
 
+        // =========================================================
+        // [API] XEM CHI TIẾT PHIẾU NHẬP (ĐÃ FIX LỖI "DATA IS NULL" BẰNG DonGia)
+        // =========================================================
+        // =========================================================
+        // [API] XEM CHI TIẾT PHIẾU NHẬP (BẢN CHỐNG DATA IS NULL TỐI THƯỢNG)
+        // =========================================================
         [HttpGet]
-        public IActionResult GetImportDetailsAPI(string maPN)
+        public async Task<IActionResult> GetImportDetailsAPI(string maPN)
         {
             try
             {
-                // Dùng đúng tên DonGia thay cho DonGiaNhap
-                var details = _context.CT_PhieuNhap
-                    .Where(c => c.MaPN == maPN)
-                    .Join(_context.SanPham, c => c.MaSP, s => s.MaSP, (c, s) => new
-                    {
-                        MaSP = c.MaSP,
-                        TenSP = s.TenSP,
-                        SoLuong = c.SoLuong ?? 0,
+                // 1. Lấy thông tin phiếu và NCC (Chỉ lấy đúng các cột cần thiết, không dùng Include)
+                var phieuInfo = await _context.PhieuNhap
+                    .Where(p => p.MaPN == maPN)
+                    .Select(p => new {
+                        MaPN = p.MaPN,
+                        NgayNhap = p.NgayNhap,
+                        TenNCC = p.NhaCungCap != null ? p.NhaCungCap.TenNCC : "Khách lẻ / Không tên",
+                        DiaChi = p.NhaCungCap != null ? p.NhaCungCap.DiaChi : "Không có địa chỉ",
+                        SDT = p.NhaCungCap != null ? p.NhaCungCap.SDT : "---"
+                    })
+                    .FirstOrDefaultAsync();
 
-                        // 3. Lấy đúng cột DonGia
-                        DonGiaNhap = c.DonGia ?? 0m,
+                if (phieuInfo == null) return Json(new { success = false, msg = "Không tìm thấy phiếu" });
 
-                        // Lấy luôn cột ThanhTien đã có sẵn của Boss
-                        ThanhTien = c.ThanhTien ?? ((c.SoLuong ?? 0) * (c.DonGia ?? 0m)),
+                // 2. Lấy danh sách chi tiết và thông tin Sản Phẩm (Dùng Select trực tiếp, BỎ Include)
+                // Việc này ép SQL chỉ lấy đúng 5 cột cần thiết, bỏ qua các cột bị lỗi Null trong bảng SanPham
+                var chiTietQuery = await _context.PhieuNhap
+                    .Where(p => p.MaPN == maPN)
+                    .SelectMany(p => p.CT_PhieuNhaps)
+                    .Select(ct => new {
+                        MaSP = ct.MaSP ?? "",
+                        TenSP = ct.SanPham != null ? ct.SanPham.TenSP : "Sản phẩm không tên",
+                        DonViTinh = ct.SanPham != null ? ct.SanPham.DonViTinh : "Cái",
+                        ThongSo = ct.SanPham != null ? ct.SanPham.ThongSoChiTiet : "",
 
-                        // Bỏ trống Số Lô để tránh lỗi không tìm thấy property
+                        SoLuong = ct.SoLuong ?? 0,
+                        DonGiaNhap = ct.DonGia ?? 0m,
+                        ThanhTien = (ct.SoLuong ?? 0) * (ct.DonGia ?? 0m),
+
                         SoLo = ""
-                    }).ToList();
+                    })
+                    .ToListAsync();
 
-                return Json(new { success = true, data = details });
+                // 3. Trả kết quả về
+                return Json(new
+                {
+                    success = true,
+                    nccInfo = new
+                    {
+                        TenNCC = phieuInfo.TenNCC,
+                        DiaChi = phieuInfo.DiaChi,
+                        SDT = phieuInfo.SDT
+                    },
+                    data = chiTietQuery
+                });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, msg = "Lỗi C#: " + ex.Message });
+                // Trả về thông báo lỗi chi tiết nhất nếu có
+                string loi = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+                return Json(new { success = false, msg = "Lỗi C#: " + loi });
             }
         }
-        // =========================================================
-        // [API] LẤY THÔNG TIN CỬA HÀNG/CHI NHÁNH CHO HÓA ĐƠN
-        // =========================================================
-        [HttpGet]
         // =========================================================
         // [API] LẤY THÔNG TIN DOANH NGHIỆP TỪ ADMIN CHO HÓA ĐƠN
         // =========================================================
@@ -1064,6 +1136,54 @@ namespace Presentation.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, msg = ex.Message });
+            }
+        }
+        [HttpPost]
+        public async Task<IActionResult> CreateProductWithImageAPI([FromForm] SanPham model, IFormFile fileAnh)
+        {
+            try
+            {
+                string imageUrl = "";
+
+                // 1. Kiểm tra và Upload ảnh lên Cloudinary
+                if (fileAnh != null && fileAnh.Length > 0)
+                {
+                    var account = new Account(
+                        "ddcbcv9xr",
+                        "981353463765943",
+                        "I46YQxQcGr-Px6kxvnA9vwRTYRA"
+                    );
+                    Cloudinary cloudinary = new Cloudinary(account);
+
+                    using (var stream = fileAnh.OpenReadStream())
+                    {
+                        var uploadParams = new ImageUploadParams()
+                        {
+                            File = new FileDescription(fileAnh.FileName, stream),
+                            Folder = "App_Kho_Hang",
+                            PublicId = model.MaSP // Đặt tên ảnh trên mây trùng với mã SP cho dễ quản lý
+                        };
+                        var uploadResult = await cloudinary.UploadAsync(uploadParams);
+                        imageUrl = uploadResult.SecureUrl.ToString();
+                    }
+                }
+
+                // 2. Gán link ảnh và lưu vào Database SQL Server
+                model.HinhAnh = imageUrl;
+                // model.TrangThai = true; // Đảm bảo sp mới tạo sẽ được bán luôn
+                model.DonGiaNhap = model.GiaNhap;
+                model.SoLuongTon = 0;
+
+                _context.SanPham.Add(model);
+                await _context.SaveChangesAsync();
+
+                return Json(new { success = true, msg = "Đã đưa sản phẩm lên mây thành công!", url = imageUrl });
+            }
+            catch (Exception ex)
+            {
+                string loiThatSu = ex.InnerException != null ? ex.InnerException.Message : ex.Message;
+
+                return Json(new { success = false, msg = "Lỗi SQL: " + loiThatSu });
             }
         }
     }

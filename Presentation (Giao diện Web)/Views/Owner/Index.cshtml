@@ -20,7 +20,10 @@
             GiaBan = x.GiaBan ?? 0,
             x.DonViTinh,
             SoLuongTon = x.SoLuongTon ?? 0,
-            TrangThai = x.TrangThai ?? false
+            TrangThai = x.TrangThai ?? false,
+            HinhAnh = x.HinhAnh ?? "",
+            ThongSoChiTiet = x.ThongSoChiTiet ?? "",
+            ThoiGianBaoHanh = x.ThoiGianBaoHanh ?? 0
         }))
         : "[]";
 }
@@ -787,19 +790,35 @@
                 </div>
             </div>
             <div class="modal fade" id="modalEditProduct" tabindex="-1">
-                <div class="modal-dialog">
+                <div class="modal-dialog modal-lg">
                     <div class="modal-content border-0 shadow-lg">
                         <div class="modal-header bg-warning text-dark">
-                            <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Chỉnh sửa Sản phẩm</h5>
+                            <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Cập nhật Sản phẩm cũ</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body p-4">
                             <div class="row g-3">
+
                                 <div class="col-md-12">
-                                    <label class="small fw-bold text-muted">Mã Sản Phẩm (Không được sửa)</label>
+                                    <div class="p-3 border rounded bg-light border-warning">
+                                        <label class="small fw-bold text-dark d-block mb-2"><i class="fas fa-image me-1"></i> Cập nhật Hình ảnh</label>
+                                        <div class="d-flex align-items-center gap-3">
+                                            <div class="flex-grow-1">
+                                                <input type="file" id="edit_FileAnh" class="form-control" accept="image/*" onchange="previewEditImg(this)">
+                                                <small class="text-muted fst-italic">* Bỏ trống nếu muốn giữ nguyên ảnh cũ</small>
+                                            </div>
+                                            <div class="border rounded bg-white p-1 shadow-sm" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                                <img id="edit_img_preview" src="https://via.placeholder.com/100x100?text=Loading..." class="img-fluid" style="max-height: 100%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-4">
+                                    <label class="small fw-bold text-muted">Mã SP (Không đổi)</label>
                                     <input type="text" id="edit_MaSP" class="form-control bg-light text-danger fw-bold" readonly>
                                 </div>
-                                <div class="col-md-12">
+                                <div class="col-md-8">
                                     <label class="small fw-bold text-muted">Tên Sản Phẩm <span class="text-danger">*</span></label>
                                     <input type="text" id="edit_TenSP" class="form-control border-primary">
                                 </div>
@@ -807,6 +826,7 @@
                                     <label class="small fw-bold text-muted">Mã Vạch</label>
                                     <input type="text" id="edit_MaVach" class="form-control">
                                 </div>
+
                                 <div class="col-md-6">
                                     <label class="small fw-bold text-success">Giá Nhập (Vốn)</label>
                                     <input type="number" id="edit_GiaNhap" class="form-control border-success text-success fw-bold" min="0">
@@ -815,6 +835,16 @@
                                     <label class="small fw-bold text-primary">Giá Bán (Lẻ)</label>
                                     <input type="number" id="edit_GiaBan" class="form-control border-primary text-primary fw-bold" min="0">
                                 </div>
+
+                                <div class="col-md-8">
+                                    <label class="small fw-bold text-muted">Thông số chi tiết</label>
+                                    <textarea id="edit_ThongSo" class="form-control border-info" rows="2" placeholder="Màu sắc, kích thước, chất liệu..."></textarea>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="small fw-bold text-muted">Bảo hành (Tháng)</label>
+                                    <input type="number" id="edit_BaoHanh" class="form-control border-info" placeholder="0" min="0">
+                                </div>
+
                             </div>
                         </div>
                         <div class="modal-footer bg-light border-0">
@@ -952,6 +982,7 @@
                                                 <small id="status_text_@maSP" class="text-muted fw-bold mt-1 d-block @(item.TrangThai == true ? "text-success" : "text-danger")">@(item.TrangThai == true ? "Đang bán" : "Ngừng bán")</small>
                                             </td>
                                             <td>
+                                                <button class="btn btn-action text-info me-1" onclick="xemChiTietSP('@maSP')" title="Xem chi tiết"><i class="fas fa-eye"></i></button>
                                                 <button class="btn btn-action text-warning me-1" onclick="openEditProductModal('@maSP')" title="Sửa Sản Phẩm"><i class="fas fa-edit"></i></button>
                                             </td>
                                         </tr>
@@ -1361,6 +1392,20 @@
                 </div>
                 <div class="modal-body p-4">
                     <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="p-3 border rounded bg-light">
+                                <label class="small fw-bold text-primary d-block mb-2"><i class="fas fa-image me-1"></i> Hình ảnh sản phẩm (Cloudinary)</label>
+                                <div class="d-flex align-items-center gap-3">
+                                    <div class="flex-grow-1">
+                                        <input type="file" id="new_FileAnh" class="form-control" accept="image/*" onchange="previewImg(this)">
+                                        <small class="text-muted fst-italic">* Chọn ảnh rõ nét để hiển thị đẹp hơn trên máy POS</small>
+                                    </div>
+                                    <div class="border rounded bg-white p-1" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                                        <img id="img_preview" src="https://via.placeholder.com/100x100?text=No+Image" class="img-fluid" style="max-height: 100%;">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="col-md-6">
                             <label class="small fw-bold text-muted">Nhóm hàng (VD: Sơn, Thép) <span class="text-danger">*</span></label>
                             <input type="text" id="new_NhomHang" class="form-control bg-light" placeholder="Gõ tên nhóm..." onchange="autoGenerateSKU()">
@@ -1425,11 +1470,49 @@
                             <label class="small fw-bold text-primary">Giá Bán (Lẻ) <span class="text-danger">*</span></label>
                             <input type="number" id="new_GiaBan" class="form-control border-primary fw-bold text-primary" placeholder="0" min="0">
                         </div>
+
+                        <div class="col-md-8">
+                            <label class="small fw-bold text-muted">Thông số chi tiết</label>
+                            <textarea id="new_ThongSo" class="form-control" rows="1" placeholder="Màu sắc, kích thước, chất liệu..."></textarea>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted">Bảo hành (Tháng)</label>
+                            <input type="number" id="new_BaoHanh" class="form-control" placeholder="0" min="0" value="0">
+                        </div>
                     </div>
-                </div>
-                <div class="modal-footer bg-light border-0">
+                </div> <div class="modal-footer bg-light border-0">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary px-4 fw-bold" onclick="saveNewProductERP()"><i class="fas fa-save me-2"></i>Lưu Sản Phẩm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="modalChiTietSP" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Thông Tin Chi Tiết</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-5 text-center mb-3 mb-md-0">
+                            <img id="detail_HinhAnh" src="https://via.placeholder.com/300x300?text=Chua+Co+Anh" class="img-fluid rounded shadow-sm border" style="max-height: 350px; object-fit: cover; width: 100%;" alt="Hình sản phẩm">
+                        </div>
+
+                        <div class="col-md-7">
+                            <h4 id="detail_TenSP" class="fw-bold text-primary mb-2">Tên Sản Phẩm</h4>
+                            <h5 id="detail_GiaBan" class="text-danger fw-bold mb-3">0 đ</h5>
+                            <hr>
+                            <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-list-ul me-2"></i>Thông số kỹ thuật:</h6>
+                            <pre id="detail_ThongSo" class="bg-light p-3 rounded border text-dark" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; white-space: pre-wrap; min-height: 120px; border-left: 4px solid #0d6efd !important;">
+Đang tải thông số...
+                            </pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
@@ -1642,16 +1725,59 @@
         // ============================================================
         // LOGIC BÁN HÀNG (POS)
         // ============================================================
-        function renderPosProducts() {
-            var grid = document.getElementById("posProductGrid"); if (!grid) return;
-            var keyword = document.getElementById("searchPosProduct").value.toLowerCase();
-            grid.innerHTML = "";
-            var filtered = allProducts.filter(p => p.TrangThai === true && p.SoLuongTon > 0 && (p.TenSP.toLowerCase().includes(keyword) || p.MaSP.toLowerCase().includes(keyword)));
-            if(filtered.length === 0) { grid.innerHTML = `<div class="col-12 py-5 text-center text-muted">Không tìm thấy sản phẩm.</div>`; return; }
-            filtered.forEach(p => {
-                grid.innerHTML += `<div class="col-md-4 col-sm-6"><div class="card h-100 pos-item-card position-relative" onclick="addToPosCart('${p.MaSP}')"><div class="card-body p-3 text-center"><span class="badge bg-success position-absolute top-0 end-0 m-2">Tồn: ${p.SoLuongTon}</span><div class="mb-2"><i class="fas fa-box fa-3x text-info opacity-75"></i></div><h6 class="fw-bold mb-1 text-truncate" title="${p.TenSP}">${p.TenSP}</h6><p class="text-danger fw-bold mb-0 fs-6">${(p.GiaBan).toLocaleString()} ₫</p></div></div></div>`;
-            });
-        }
+        // ============================================================
+         // LOGIC BÁN HÀNG (POS) - ĐÃ CẬP NHẬT ĐỂ HIỆN ẢNH
+         // ============================================================
+         function renderPosProducts() {
+             var grid = document.getElementById("posProductGrid");
+             if (!grid) return;
+
+             var keyword = document.getElementById("searchPosProduct").value.toLowerCase();
+             grid.innerHTML = "";
+
+             var filtered = allProducts.filter(p => p.TrangThai === true && p.SoLuongTon > 0 && (p.TenSP.toLowerCase().includes(keyword) || p.MaSP.toLowerCase().includes(keyword)));
+
+             if(filtered.length === 0) {
+                 grid.innerHTML = `<div class="col-12 py-5 text-center text-muted">Không tìm thấy sản phẩm.</div>`;
+                 return;
+             }
+
+             filtered.forEach(p => {
+                 // 1. BẮT ĐÚNG LINK ẢNH (Xử lý chữ hoa/chữ thường từ JSON)
+                 var imgUrl = p.HinhAnh || p.hinhAnh;
+
+                 // 2. NẾU CÓ ẢNH THÌ HIỆN ẢNH, KHÔNG CÓ THÌ HIỆN ICON HỘP XANH
+                 var hinhAnhHtml = (imgUrl && imgUrl.trim() !== "")
+                     ? `<img src="${imgUrl}" class="img-fluid rounded mb-2 shadow-sm" style="height: 70px; width: 100%; object-fit: contain;" alt="Ảnh SP">`
+                     : `<div class="mb-2"><i class="fas fa-box fa-3x text-info opacity-75"></i></div>`;
+
+                 var ten = p.TenSP || p.tenSP;
+                 var gia = p.GiaBan || p.giaBan || 0;
+                 var ton = p.SoLuongTon || p.soLuongTon || 0;
+                 var ma = p.MaSP || p.maSP;
+
+                 // 3. VẼ CARD LÊN MÀN HÌNH
+                 grid.innerHTML += `
+                     <div class="col-md-4 col-sm-6">
+                         <div class="card h-100 pos-item-card position-relative border-0 shadow-sm">
+                             <span class="badge bg-success position-absolute top-0 end-0 m-2 z-1">Tồn: ${ton}</span>
+
+                             <div class="card-body p-3 text-center" onclick="addToPosCart('${ma}')" style="cursor: pointer;">
+                                 ${hinhAnhHtml}
+
+                                 <h6 class="fw-bold mb-1 text-truncate" title="${ten}">${ten}</h6>
+                                 <p class="text-danger fw-bold mb-0 fs-6">${gia.toLocaleString()} ₫</p>
+                             </div>
+
+                             <div class="card-footer bg-white border-top-0 pt-0">
+                                 <button class="btn btn-sm btn-outline-info w-100 fw-bold" onclick="xemChiTietSP('${ma}'); event.stopPropagation();">
+                                     <i class="fas fa-search-plus me-1"></i> Xem thông số
+                                 </button>
+                             </div>
+                         </div>
+                     </div>`;
+             });
+         }
         function filterPosProducts() { renderPosProducts(); }
         function addToPosCart(maSP) {
             var p = allProducts.find(x => x.MaSP === maSP); if(!p) return;
@@ -1925,62 +2051,141 @@
         }
 
         var searchInput = document.getElementById("searchProduct");
-        var searchRes = document.getElementById("searchResults");
-        if(searchInput && searchRes){
-            function performSearch() {
-                var k = searchInput.value.toLowerCase(); searchRes.innerHTML = "";
-                var sourceData = [...allProducts].reverse();
-                var matches = k.length < 1 ? sourceData : sourceData.filter(p => p.TenSP.toLowerCase().includes(k) || p.MaSP.toLowerCase().includes(k));
-                if(matches.length > 0) {
-                    searchRes.style.display = "block";
-                    matches.slice(0, 6).forEach(p => {
-                        var item = document.createElement("a"); item.className = "list-group-item list-group-item-action cursor-pointer bg-white";
-                        item.innerHTML = `<div class="d-flex justify-content-between align-items-center"><div><div class="fw-bold">${p.TenSP}</div><small class="text-muted">${p.MaSP}</small></div><span class="badge bg-light text-dark border">${p.GiaNhap.toLocaleString()}đ</span></div>`;
-                        item.onclick = function() { addToCart(p); searchInput.value = ""; searchRes.style.display = "none"; return false; }; searchRes.appendChild(item);
-                    });
-                } else { if(k.length > 0) searchRes.style.display = "none"; }
-            }
-            searchInput.addEventListener("input", performSearch); searchInput.addEventListener("focus", performSearch);
-            document.addEventListener("click", function(e) { if (e.target !== searchInput && e.target.parentNode !== searchRes) { searchRes.style.display = "none"; } });
-        }
+           var searchRes = document.getElementById("searchResults");
+           if(searchInput && searchRes){
+               function performSearch() {
+                   var k = searchInput.value.toLowerCase(); searchRes.innerHTML = "";
+                   var sourceData = [...allProducts].reverse();
 
-        function addToCart(p) {
-            var item = importCart.find(c => c.MaSP === p.MaSP);
-            if(item) { item.SoLuong++; } else { importCart.push({ MaSP: p.MaSP, TenSP: p.TenSP, DVT: p.DonViTinh, SoLuong: 1, DonGia: p.GiaNhap || 0 }); }
-            renderCart();
-        }
+                   // [FIX LỖI CHỮ HOA/THƯỜNG]
+                   var matches = k.length < 1 ? sourceData : sourceData.filter(p => {
+                       var ten = (p.TenSP || p.tenSP || "").toLowerCase();
+                       var ma = (p.MaSP || p.maSP || "").toLowerCase();
+                       return ten.includes(k) || ma.includes(k);
+                   });
 
-        function renderCart() {
-            var tbody = document.getElementById("cartBody"); var emptyState = document.getElementById("emptyState");
-            if(!tbody) return; tbody.innerHTML = ""; var totalQ = 0; var totalM = 0;
-            if(importCart.length === 0) { if(emptyState) emptyState.style.display = "block"; }
-            else {
-                if(emptyState) emptyState.style.display = "none";
-                importCart.forEach((c, i) => {
-                    var tt = c.SoLuong * c.DonGia; totalQ += parseInt(c.SoLuong); totalM += tt;
-                    tbody.innerHTML += `<tr><td>${i+1}</td><td><div class="fw-bold text-primary">${c.TenSP}</div><small class="text-muted">${c.MaSP}</small></td><td>${c.DVT}</td><td><input type="number" class="input-compact bg-white text-center" value="${c.SoLuong}" min="1" onchange="updateCart(${i}, 'q', this.value)"></td><td><input type="number" class="input-compact bg-white text-end" value="${c.DonGia}" min="0" onchange="updateCart(${i}, 'p', this.value)"></td><td class="text-end fw-bold">${tt.toLocaleString('vi-VN')}</td><td class="text-center"><button class="btn btn-action text-danger" onclick="removeCart(${i})"><i class="fas fa-times"></i></button></td></tr>`;
-                });
-            }
-            var lblQty = document.getElementById("lblTotalQty"); var lblMoney = document.getElementById("lblTotalMoney");
-            if(lblQty) lblQty.innerText = totalQ; if(lblMoney) lblMoney.innerText = totalM.toLocaleString('vi-VN', {style:'currency', currency:'VND'});
-        }
+                   if(matches.length > 0) {
+                       searchRes.style.display = "block";
+                       matches.slice(0, 6).forEach(p => {
+                           var ten = p.TenSP || p.tenSP || "Không tên";
+                           var ma = p.MaSP || p.maSP || "---";
+                           var gia = p.GiaNhap || p.giaNhap || 0; // [FIX LỖI NULL GIÁ]
 
-        window.updateCart = function(i, type, val) { if(type === 'q') importCart[i].SoLuong = parseInt(val)||1; if(type === 'p') importCart[i].DonGia = parseFloat(val)||0; renderCart(); };
-        window.removeCart = function(i) { importCart.splice(i, 1); renderCart(); };
+                           var item = document.createElement("a");
+                           item.className = "list-group-item list-group-item-action cursor-pointer bg-white";
+                           item.innerHTML = `<div class="d-flex justify-content-between align-items-center"><div><div class="fw-bold text-primary">${ten}</div><small class="text-muted">${ma}</small></div><span class="badge bg-light text-dark border">${gia.toLocaleString('vi-VN')} đ</span></div>`;
+                           item.onclick = function() {
+                               addToCart(p);
+                               searchInput.value = "";
+                               searchRes.style.display = "none";
+                               return false;
+                           };
+                           searchRes.appendChild(item);
+                       });
+                   } else {
+                       if(k.length > 0) searchRes.style.display = "none";
+                   }
+               }
+               searchInput.addEventListener("input", performSearch);
+               searchInput.addEventListener("focus", performSearch);
+               document.addEventListener("click", function(e) { if (e.target !== searchInput && e.target.parentNode !== searchRes) { searchRes.style.display = "none"; } });
+           }
+
+           // [FIX LỖI KHÔNG RỚT XUỐNG GIỎ HÀNG]
+           function addToCart(p) {
+               var ma = p.MaSP || p.maSP;
+               var ten = p.TenSP || p.tenSP;
+               var dvt = p.DonViTinh || p.donViTinh || "Cái";
+               var gia = p.GiaNhap || p.giaNhap || 0;
+
+               var item = importCart.find(c => c.MaSP === ma);
+               if(item) {
+                   item.SoLuong++;
+               } else {
+                   importCart.push({ MaSP: ma, TenSP: ten, DVT: dvt, SoLuong: 1, DonGia: gia });
+               }
+               renderCart();
+               // Bật thông báo cho xịn xò
+               Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã đưa vào phiếu nhập', showConfirmButton: false, timer: 1000 });
+           }
+
+           function renderCart() {
+               var tbody = document.getElementById("cartBody");
+               var emptyState = document.getElementById("emptyState");
+               if(!tbody) return;
+
+               tbody.innerHTML = "";
+               var totalQ = 0; var totalM = 0;
+
+               if(importCart.length === 0) {
+                   if(emptyState) emptyState.style.display = "block";
+               }
+               else {
+                   if(emptyState) emptyState.style.display = "none";
+                   importCart.forEach((c, i) => {
+                       var tt = c.SoLuong * c.DonGia;
+                       totalQ += parseInt(c.SoLuong);
+                       totalM += tt;
+
+                       // Giao diện ô nhập liệu đã được làm cho gọn gàng, đẹp mắt hơn
+                       tbody.innerHTML += `
+                           <tr>
+                               <td class="text-muted">${i+1}</td>
+                               <td class="text-start">
+                                   <div class="fw-bold text-primary">${c.TenSP}</div>
+                                   <small class="text-muted">${c.MaSP}</small>
+                               </td>
+                               <td><span class="badge bg-light text-dark border">${c.DVT}</span></td>
+                               <td><input type="number" class="form-control form-control-sm text-center fw-bold bg-white" value="${c.SoLuong}" min="1" onchange="updateCart(${i}, 'q', this.value)" onclick="this.select()"></td>
+                               <td><input type="number" class="form-control form-control-sm text-end fw-bold bg-white text-success" value="${c.DonGia}" min="0" onchange="updateCart(${i}, 'p', this.value)" onclick="this.select()"></td>
+                               <td class="text-end fw-bold text-danger">${tt.toLocaleString('vi-VN')} ₫</td>
+                               <td class="text-center"><button class="btn btn-sm text-danger" onclick="removeCart(${i})"><i class="fas fa-times"></i></button></td>
+                           </tr>`;
+                   });
+               }
+               var lblQty = document.getElementById("lblTotalQty");
+               var lblMoney = document.getElementById("lblTotalMoney");
+               if(lblQty) lblQty.innerText = totalQ;
+               if(lblMoney) lblMoney.innerText = totalM.toLocaleString('vi-VN') + " ₫";
+           }
+
+           window.updateCart = function(i, type, val) {
+               if(type === 'q') importCart[i].SoLuong = parseInt(val) || 1;
+               if(type === 'p') importCart[i].DonGia = parseFloat(val) || 0;
+               renderCart();
+           };
+           window.removeCart = function(i) {
+               importCart.splice(i, 1);
+               renderCart();
+           };
 
         function submitPhieuNhap() {
-            var ncc = document.getElementById("MaNCC").value;
-            if(!ncc) { Swal.fire("Lỗi", "Vui lòng chọn Nhà Cung Cấp!", "error"); return; }
-            if(importCart.length === 0) { Swal.fire("Lỗi", "Giỏ hàng trống!", "error"); return; }
-            Swal.fire({title: 'Đang xử lý...', didOpen: () => Swal.showLoading()});
-            fetch('/Owner/SavePhieuNhap', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ MaNCC: ncc, NgayNhap: document.getElementById("NgayNhap").value, GhiChu: document.getElementById("GhiChu").value, ChiTiet: importCart })
-            }).then(res => res.json()).then(data => {
-                if(data.success) { Swal.fire("Thành công", "Nhập kho thành công!", "success").then(() => window.location.reload()); }
-                else { Swal.fire("Lỗi", data.msg, "error"); }
-            }).catch(() => Swal.fire("Lỗi", "Mất kết nối", "error"));
-        }
+               var ncc = document.getElementById("MaNCC").value;
+               if(!ncc) { Swal.fire("Lỗi", "Vui lòng chọn Nhà Cung Cấp!", "error"); return; }
+               if(importCart.length === 0) { Swal.fire("Lỗi", "Giỏ hàng trống!", "error"); return; }
+
+               Swal.fire({title: 'Đang chốt sổ kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+
+               fetch('/Owner/SavePhieuNhap', {
+                   method: 'POST', headers: { 'Content-Type': 'application/json' },
+                   body: JSON.stringify({ MaNCC: ncc, NgayNhap: document.getElementById("NgayNhap").value, GhiChu: document.getElementById("GhiChu").value, ChiTiet: importCart })
+               }).then(res => res.json()).then(data => {
+                   if(data.success) {
+                       // 1. Dọn dẹp bàn làm việc sau khi nhập xong
+                       importCart = [];
+                       renderCart();
+                       document.getElementById("GhiChu").value = "";
+                       document.getElementById("MaNCC").value = "";
+
+                       // 2. Báo thành công và TỰ ĐỘNG MỞ LỊCH SỬ
+                       Swal.fire({icon: "success", title: "Nhập Kho Thành Công", text: "Hệ thống đã cập nhật tồn kho!", timer: 1500, showConfirmButton: false})
+                       .then(() => {
+                           openImportHistoryModal(); // Bật popup lịch sử lên luôn
+                       });
+                   }
+                   else { Swal.fire("Lỗi", data.msg, "error"); }
+               }).catch(() => Swal.fire("Lỗi", "Mất kết nối máy chủ", "error"));
+           }
 
         var html5QrcodeScanner = null;
         function openScannerModal() {
@@ -2048,16 +2253,39 @@
         // LOGIC QUẢN LÝ SẢN PHẨM & NHÂN VIÊN & KIỂM KÊ
         // ============================================================
         function toggleProductStatus(maSP, checkboxObj) {
-            fetch('/Owner/ToggleProductStatusAPI', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ MaSP: maSP }) })
-            .then(res => res.json()).then(data => {
-                if(data.success) {
-                    var textObj = document.getElementById("status_text_" + maSP);
-                    if(data.newStatus) { textObj.innerText = "Đang bán"; textObj.className = "text-success fw-bold mt-1 d-block"; }
-                    else { textObj.innerText = "Ngừng bán"; textObj.className = "text-danger fw-bold mt-1 d-block"; }
-                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã lưu trạng thái', showConfirmButton: false, timer: 1500 });
-                } else { checkboxObj.checked = !checkboxObj.checked; Swal.fire("Lỗi", "Không thể đổi trạng thái", "error"); }
-            });
-        }
+               fetch('/Owner/ToggleProductStatusAPI', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ MaSP: maSP }) })
+               .then(res => res.json()).then(data => {
+                   if(data.success) {
+                       var textObj = document.getElementById("status_text_" + maSP);
+
+                       if(data.newStatus) {
+                           textObj.innerText = "Đang bán";
+                           textObj.className = "text-success fw-bold mt-1 d-block";
+                       } else {
+                           textObj.innerText = "Ngừng bán";
+                           textObj.className = "text-danger fw-bold mt-1 d-block";
+                       }
+
+                       // =========================================================
+                       // 🔥 ĐÂY CHÍNH LÀ "TRẠM 2" DÀNH RIÊNG CHO MÁY CỦA BOSS 🔥
+                       // Cập nhật ngay vào "trí nhớ" của POS và vẽ lại màn hình
+                       // =========================================================
+                       var p = allProducts.find(x => x.MaSP === maSP || x.maSP === maSP);
+                       if (p) {
+                           p.TrangThai = data.newStatus; // Cập nhật trạng thái mới
+                           if (typeof renderPosProducts === "function") {
+                               renderPosProducts(); // Ra lệnh: "POS ơi, vẽ lại đi, hàng này nghỉ bán rồi!"
+                           }
+                       }
+                       // =========================================================
+
+                       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã lưu trạng thái', showConfirmButton: false, timer: 1500 });
+                   } else {
+                       checkboxObj.checked = !checkboxObj.checked;
+                       Swal.fire("Lỗi", "Không thể đổi trạng thái", "error");
+                   }
+               });
+           }
 
         function submitEditProduct(event, maSP) {
             event.preventDefault();
@@ -2175,51 +2403,56 @@
 
           // 5. Lưu sản phẩm mới lên Server và đưa thẳng vào Giỏ Hàng
         // 5. Lưu sản phẩm mới lên Server và đưa thẳng vào Giỏ Hàng
-          function saveNewProductERP() {
+        // ==========================================================
+           // Hàm Lưu Sản Phẩm Mới (Có Ảnh, Thông số, Bảo hành)
+           // ==========================================================
+           function saveNewProductERP() {
                var ma = document.getElementById('new_MaSP').value;
                var ten = document.getElementById('new_TenSP').value;
-               var mv = document.getElementById('new_MaVach').value;
-               var dvt = document.getElementById('new_DVT').value;
-               var nhom = document.getElementById('new_NhomHang').value;
 
-               // [MỚI] Lấy Giá Nhập và Giá Bán từ giao diện
-               var giaNhap = parseFloat(document.getElementById('new_GiaNhap').value) || 0;
-               var giaBan = parseFloat(document.getElementById('new_GiaBan').value) || 0;
-
-               if(!ma || !ten) { Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm, NCC và Tên SP để sinh mã!", "warning"); return; }
-               if(giaNhap === 0 || giaBan === 0) {
-                   Swal.fire("Lưu ý", "Bạn đang để Giá Nhập hoặc Giá Bán bằng 0 đ!", "info");
-                   // Ở đây tui chỉ cảnh báo, vẫn cho lưu. Nếu Boss muốn bắt buộc phải nhập giá mới cho lưu thì đổi 'info' thành 'error' và thêm chữ return; ở đây nhé.
+               if(!ma || !ten) {
+                   Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm hàng và Tên để sinh mã!", "warning");
+                   return;
                }
 
-               fetch('/Owner/CreateQuickProductAPI', {
+               var formData = new FormData();
+               formData.append("MaSP", ma);
+               formData.append("TenSP", ten);
+               formData.append("MaVach", document.getElementById('new_MaVach').value);
+               formData.append("DonViTinh", document.getElementById('new_DVT').value);
+               formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
+               formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value); // Chống lỗi NULL
+               formData.append("GiaBan", document.getElementById('new_GiaBan').value);
+               formData.append("TrangThai", true);
+
+               // 2 TRƯỜNG MỚI THÊM VÀO:
+               formData.append("ThongSoChiTiet", document.getElementById('new_ThongSo').value);
+               formData.append("ThoiGianBaoHanh", document.getElementById('new_BaoHanh').value);
+
+               // Xử lý file ảnh
+               var fileInput = document.getElementById('new_FileAnh');
+               if (fileInput && fileInput.files.length > 0) {
+                   formData.append("fileAnh", fileInput.files[0]);
+               }
+
+               Swal.fire({ title: 'Đang đẩy lên mây...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+               fetch('/Owner/CreateProductWithImageAPI', {
                    method: 'POST',
-                   headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({
-                       MaSP: ma,
-                       TenSP: ten,
-                       MaVach: mv,
-                       DonViTinh: dvt,
-                       MaNhom: nhom,
-                       GiaNhap: giaNhap,      // Gửi giá nhập lên DB
-                       DonGiaNhap: giaNhap,   // Gửi giá nhập lên DB
-                       GiaBan: giaBan,        // Gửi giá bán lên DB
-                       ThoiGianBaoHanh: 0
-                   })
+                   body: formData
                })
                .then(res => res.json())
                .then(res => {
+                   Swal.close();
                    if(res.success) {
-                       bootstrap.Modal.getInstance(document.getElementById('modalAddProduct')).hide();
-
-                       // Bắn ngay món này vào giỏ nhập hàng ảo kèm luôn Giá Nhập
-                       var newP = { MaSP: ma, TenSP: ten, MaVach: mv, DonViTinh: dvt, GiaNhap: giaNhap, GiaBan: giaBan, SoLuongTon: 0, TrangThai: true };
-                       allProducts.push(newP);
-                       addToCart(newP); // Hàm này sẽ tự lấy newP.GiaNhap đưa vào cột Đơn giá trong bảng phiếu nhập
-
-                       Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã tạo Mã: ' + ma, showConfirmButton: false, timer: 2000 });
+                       Swal.fire("Thành công", res.msg, "success").then(() => location.reload());
+                   } else {
+                       Swal.fire("Lỗi SQL", res.msg, "error");
                    }
-                   else { Swal.fire("Lỗi", res.msg, "error"); }
+               })
+               .catch(err => {
+                   Swal.close();
+                   Swal.fire("Lỗi", "Không thể kết nối máy chủ!", "error");
                });
            }
         function openAddModal() {
@@ -2409,11 +2642,18 @@
             });
         }
         // ============================================================
-        // LOGIC XEM LỊCH SỬ PHIẾU NHẬP KHO (NHƯ HÓA ĐƠN)
+        // [VIP] LOGIC XEM LỊCH SỬ PHIẾU NHẬP KHO CHUẨN DOANH NGHIỆP
         // ============================================================
         function openImportHistoryModal() {
-            new bootstrap.Modal(document.getElementById('importHistoryModal')).show();
-            document.getElementById('importDetailArea').innerHTML = `<div class="text-center text-muted mt-5"><i class="fas fa-file-invoice fa-4x mb-3 opacity-25"></i><h5>Chọn một phiếu nhập bên trái để xem chi tiết</h5></div>`;
+            var modal = new bootstrap.Modal(document.getElementById('importHistoryModal'));
+            modal.show();
+
+            document.getElementById('importDetailArea').innerHTML = `
+                <div class="text-center text-muted mt-5 pt-5">
+                    <i class="fas fa-file-invoice fa-5x mb-3 opacity-25"></i>
+                    <h4 class="fw-bold">HỆ THỐNG LƯU TRỮ CHỨNG TỪ</h4>
+                    <p>Chọn một phiếu nhập bên trái để xem chi tiết hoặc in ấn.</p>
+                </div>`;
 
             fetch('/Owner/GetImportHistoryAPI')
             .then(res => res.json())
@@ -2421,120 +2661,216 @@
                 var list = document.getElementById('importList');
                 list.innerHTML = "";
                 if(data.success && data.data.length > 0) {
-                    data.data.forEach(pn => {
-                        var ma = pn.maPN || pn.MaPN;
-                        var tt = pn.tongTien || pn.TongTien || 0;
-                        var date = pn.ngayNhap || pn.NgayNhap || "";
+                          // ĐÃ SỬA
+        data.data.forEach(pn => {
+            var ma = pn.maPN || pn.MaPN || "";
+            var tt = pn.tongTien || pn.TongTien || 0;
+            var date = pn.ngayNhap || pn.NgayNhap || "";
+
                         list.innerHTML += `
-                            <button class="list-group-item list-group-item-action p-3 border-bottom" onclick="viewImportDetails('${ma}', ${tt}, '${date}')">
+                            <button class="list-group-item list-group-item-action p-3 border-bottom border-0 border-bottom text-start" onclick="viewImportDetails('${ma}', ${tt}, '${date}')">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="text-primary"><i class="fas fa-box me-1"></i> ${ma}</strong>
-                                    <span class="badge bg-success rounded-pill">${tt.toLocaleString()} ₫</span>
+                                    <strong class="text-primary fs-6"><i class="fas fa-box-open me-2 text-warning"></i>${ma}</strong>
+                                    <span class="badge bg-success rounded-pill px-2 py-1 fs-6">${tt.toLocaleString()} ₫</span>
                                 </div>
-                                <small class="text-muted"><i class="far fa-clock me-1"></i> ${date}</small>
+                                <div class="d-flex justify-content-between align-items-center mt-2">
+                                    <small class="text-muted fw-bold"><i class="far fa-clock me-1"></i> ${date}</small>
+                                    <small class="text-info fw-bold"><i class="fas fa-check-circle me-1"></i>Hoàn tất</small>
+                                </div>
                             </button>`;
                     });
                 } else {
-                    list.innerHTML = `<div class="p-4 text-center text-muted">Chưa có phiếu nhập nào!</div>`;
+                    list.innerHTML = `<div class="p-5 text-center text-muted"><i class="fas fa-folder-open fa-2x mb-2"></i><br>Chưa có dữ liệu nhập kho!</div>`;
                 }
-            }).catch(() => document.getElementById('importList').innerHTML = `<div class="text-danger p-3">Lỗi tải dữ liệu</div>`);
+            }).catch(() => document.getElementById('importList').innerHTML = `<div class="text-danger p-4 text-center fw-bold"><i class="fas fa-wifi me-2"></i>Lỗi kết nối dữ liệu</div>`);
         }
 
+  
         function viewImportDetails(maPN, tongTien, ngayNhap) {
-            var area = document.getElementById('importDetailArea');
-            area.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-primary"></div><p class="mt-2 text-muted">Đang tải chi tiết phiếu nhập...</p></div>`;
+               var area = document.getElementById('importDetailArea');
+               area.innerHTML = `<div class="text-center mt-5 pt-5"><div class="spinner-grow text-success" style="width: 3rem; height: 3rem;"></div><h5 class="mt-3 text-success fw-bold">Đang trích xuất chứng từ kho...</h5></div>`;
 
-            fetch('/Owner/GetImportDetailsAPI?maPN=' + maPN)
-            .then(res => res.json())
-            .then(data => {
-                if(data.success) {
-                    // Thiết kế lại giao diện như 1 tờ hóa đơn xịn xò
-                    var html = `
-                        <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom border-2 border-primary">
-                            <div>
-                                <h4 class="fw-bold mb-1 text-primary">HÓA ĐƠN NHẬP KHO</h4>
-                                <h6 class="text-muted mb-0">MÃ PHIẾU: ${maPN}</h6>
-                            </div>
-                            <div class="text-end">
-                                <small class="text-muted d-block">Ngày lập phiếu:</small>
-                                <strong>${ngayNhap}</strong>
-                                <br/>
-                                <button class="btn btn-sm btn-outline-secondary mt-2 shadow-sm" onclick="window.print()"><i class="fas fa-print me-1"></i> In Phiếu</button>
-                            </div>
-                        </div>
+               fetch('/Owner/GetImportDetailsAPI?maPN=' + maPN)
+               .then(res => res.json())
+               .then(data => {
+                   if(data.success) {
+                       var qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(maPN)}`;
+                       var ncc = data.nccInfo; // Lấy cục thông tin nhà cung cấp C# vừa gửi xuống
 
-                        <div class="table-responsive">
-                            <table class="table table-bordered table-striped text-center align-middle">
-                                <thead class="table-primary">
-                                    <tr>
-                                        <th>Mã SP</th>
-                                        <th class="text-start">Tên Hàng / Lô</th>
-                                        <th>Số lượng</th>
-                                        <th>Đơn giá (Vốn)</th>
-                                        <th>Thành tiền</th>
-                                    </tr>
-                                </thead>
-                                <tbody>`;
+                       var html = `
+                           <div class="invoice-wrapper bg-white p-4 p-md-5 border rounded shadow-sm" id="print-invoice-area" style="position: relative; overflow: hidden; min-height: 600px;">
 
-                    data.data.forEach(c => {
-                        var mSP = c.maSP || c.MaSP;
-                        var tSP = c.tenSP || c.TenSP;
-                        var sl = c.soLuong || c.SoLuong;
-                        var dgn = c.donGiaNhap || c.DonGiaNhap || 0;
-                        var tt = c.thanhTien || c.ThanhTien || 0;
-                        var solo = c.soLo || c.SoLo || "";
+                               <div style="position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(25, 135, 84, 0.05); font-weight: 900; white-space: nowrap; pointer-events: none; z-index: 0; border: 12px solid rgba(25, 135, 84, 0.05); padding: 20px; border-radius: 20px;">
+                                   ĐÃ NHẬP KHO
+                               </div>
 
-                        var loHTML = solo ? `<br><small class="text-danger fw-bold"><i class="fas fa-tag me-1"></i>Lô: ${solo}</small>` : "";
+                               <div class="row pb-3 mb-4 border-bottom border-3 border-dark" style="position: relative; z-index: 1;">
+                                   <div class="col-sm-7">
+                                       <h2 class="fw-bold text-uppercase text-dark mb-1">PHIẾU NHẬP KHO</h2>
+                                       <p class="text-muted mb-0">Mã phiếu: <strong>${maPN}</strong></p>
+                                       <p class="text-muted mb-0">Ngày lập: ${ngayNhap}</p>
+                                   </div>
+                                   <div class="col-sm-5 text-sm-end mt-3 mt-sm-0">
+                                       <img src="${qrUrl}" alt="QR Code" class="border p-1 rounded bg-white shadow-sm" style="width: 80px; height: 80px;">
+                                   </div>
+                               </div>
 
-                        html += `
-                            <tr>
-                                <td class="text-muted fw-bold small">${mSP}</td>
-                                <td class="text-start">
-                                    <span class="fw-bold text-dark">${tSP}</span>
-                                    ${loHTML}
-                                </td>
-                                <td class="fs-6 fw-bold text-primary">${sl}</td>
-                                <td>${dgn.toLocaleString()} ₫</td>
-                                <td class="text-danger fw-bold">${tt.toLocaleString()} ₫</td>
-                            </tr>`;
-                    });
+                               <div class="row mb-4 text-dark" style="position: relative; z-index: 1;">
+                                   <div class="col-sm-6">
+                                       <div class="p-3 bg-light rounded border border-secondary h-100 border-start border-4 border-start-primary">
+                                           <p class="mb-2 small text-primary text-uppercase fw-bold"><i class="fas fa-building me-1"></i> BÊN NHẬN HÀNG (KHO)</p>
+                                           <p class="mb-1 fw-bold fs-6">${globalStoreInfo.ten || "HỆ THỐNG SMART WAREHOUSE"}</p>
+                                           <p class="mb-1 small"><i class="fas fa-map-marker-alt me-2 text-muted"></i>${globalStoreInfo.diaChi || "Đang cập nhật..."}</p>
+                                           <p class="mb-0 small"><i class="fas fa-phone-alt me-2 text-muted"></i>Hotline: ${globalStoreInfo.hotline || "---"}</p>
+                                       </div>
+                                   </div>
+                                         // ĐÃ SỬA: KIỂM TRA NCC CÓ NULL HAY KHÔNG
+        <div class="col-sm-6 mt-3 mt-sm-0">
+            <div class="p-3 bg-light rounded border border-secondary h-100 border-start border-4 border-start-warning">
+                <p class="mb-2 small text-warning text-uppercase fw-bold" style="color: #d39e00 !important;"><i class="fas fa-truck-moving me-1"></i> BÊN GIAO HÀNG (NCC)</p>
+                <p class="mb-1 fw-bold fs-6 text-dark">${ncc ? (ncc.TenNCC || ncc.tenNCC || "Khách lẻ") : "Khách lẻ"}</p>
+                <p class="mb-1 small"><i class="fas fa-map-marker-alt me-2 text-muted"></i>${ncc ? (ncc.DiaChi || ncc.diaChi || "Không có địa chỉ") : "Không có địa chỉ"}</p>
+                <p class="mb-0 small"><i class="fas fa-phone-alt me-2 text-muted"></i>Liên hệ: ${ncc ? (ncc.SDT || ncc.sdt || "---") : "---"}</p>
+            </div>
+        </div>
+                               </div>
 
-                    html += `
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-end mt-4 p-4 bg-light border rounded">
-                            <span class="fs-5 text-muted">TỔNG GIÁ TRỊ NHẬP HÀNG:</span>
-                            <h2 class="fw-bold text-success mb-0 mt-1">${tongTien.toLocaleString()} ₫</h2>
-                        </div>`;
+                               <h6 class="fw-bold text-dark mb-3" style="position: relative; z-index: 1;"><i class="fas fa-list-ol me-2"></i>BẢNG KÊ HÀNG HÓA NHẬP KHO:</h6>
 
-                    area.innerHTML = html;
-                } else {
-                    area.innerHTML = `<div class="text-center mt-5 text-danger fw-bold">Lỗi: ${data.msg}</div>`;
-                }
-            }).catch(() => area.innerHTML = `<div class="text-center mt-5 text-danger fw-bold">Lỗi mạng!</div>`);
-        }
+                               <div class="table-responsive mb-4" style="position: relative; z-index: 1;">
+                                   <table class="table table-bordered table-hover text-center align-middle mb-0" style="border-color: #dee2e6;">
+                                       <thead class="table-dark">
+                                           <tr>
+                                               <th style="width: 5%">STT</th>
+                                               <th class="text-start" style="width: 45%">Hàng Hóa / Quy Cách - Thông Số</th>
+                                               <th style="width: 8%">ĐVT</th>
+                                               <th style="width: 10%">SL</th>
+                                               <th style="width: 15%">Đơn giá nhập</th>
+                                               <th class="text-end pe-3" style="width: 17%">Thành tiền</th>
+                                           </tr>
+                                       </thead>
+                                       <tbody>`;
+
+                       var stt = 1;
+                       data.data.forEach(c => {
+                           var mSP = c.maSP || c.MaSP;
+                           var tSP = c.tenSP || c.TenSP;
+                           var sl = c.soLuong || c.SoLuong;
+                           var dgn = c.donGiaNhap || c.DonGiaNhap || 0;
+                           var tt = c.thanhTien || c.ThanhTien || 0;
+                           var solo = c.soLo || c.SoLo || "";
+                           var dvt = c.donViTinh || c.DonViTinh || "Cái";
+                           var thongSo = c.thongSo || c.ThongSo || "";
+
+                           var loHTML = solo ? `<span class="badge bg-danger ms-2"><i class="fas fa-tag me-1"></i>Lô: ${solo}</span>` : "";
+
+                           html += `
+                                           <tr>
+                                               <td class="text-muted fw-bold">${stt++}</td>
+                                               <td class="text-start">
+                                                   <div class="fw-bold text-dark fs-6">${tSP} ${loHTML}</div>
+                                                   <div class="small text-secondary mt-1">
+                                                       <span class="text-muted border-end border-2 pe-2 me-2">Mã: ${mSP}</span>
+                                                       <span class="fst-italic"><i class="fas fa-info-circle me-1"></i>TS: ${thongSo}</span>
+                                                   </div>
+                                               </td>
+                                               <td class="fw-bold text-muted">${dvt}</td>
+                                               <td class="fw-bold fs-6 text-primary">${sl}</td>
+                                               <td>${dgn.toLocaleString()} ₫</td>
+                                               <td class="text-danger fw-bold pe-3">${tt.toLocaleString()} ₫</td>
+                                           </tr>`;
+                       });
+
+                       html += `
+                                       </tbody>
+                                   </table>
+                               </div>
+
+                               <div class="row justify-content-end" style="position: relative; z-index: 1;">
+                                   <div class="col-sm-7 col-md-6">
+                                       <div class="p-3 bg-light border border-secondary rounded shadow-sm">
+                                           <div class="d-flex justify-content-between align-items-center mb-2">
+                                               <span class="text-muted fw-bold">Tổng số lượng thực nhập:</span>
+                                               <span class="text-dark fs-5 fw-bold">${data.data.reduce((sum, item) => sum + (item.soLuong || item.SoLuong), 0)}</span>
+                                           </div>
+                                           <div class="d-flex justify-content-between align-items-center border-top border-dark pt-2 mt-2">
+                                               <span class="fw-bold fs-5 text-dark">TỔNG TIỀN THANH TOÁN:</span>
+                                               <span class="fw-bold text-success fs-4">${tongTien.toLocaleString()} ₫</span>
+                                           </div>
+                                       </div>
+                                   </div>
+                               </div>
+
+                               <div class="row mt-5 pt-4 text-center" style="position: relative; z-index: 1;">
+                                   <div class="col-4">
+                                       <p class="fw-bold mb-5 pb-4">Người lập phiếu</p>
+                                       <p class="text-muted small">(Ký, ghi rõ họ tên)</p>
+                                   </div>
+                                   <div class="col-4">
+                                       <p class="fw-bold mb-5 pb-4">Đại diện Bên giao hàng</p>
+                                       <p class="text-muted small">(Ký, ghi rõ họ tên)</p>
+                                   </div>
+                                   <div class="col-4">
+                                       <p class="fw-bold mb-5 pb-4">Thủ kho (Bên nhận)</p>
+                                       <p class="text-muted small">(Ký, ghi rõ họ tên)</p>
+                                   </div>
+                               </div>
+                           </div>
+
+                           <div class="text-end mt-4">
+                               <button class="btn btn-outline-secondary px-4 fw-bold shadow-sm me-2" data-bs-dismiss="modal">Đóng</button>
+                               <button class="btn btn-success px-5 fw-bold shadow-sm" onclick="printInvoice()"><i class="fas fa-print me-2"></i> IN PHIẾU NHẬP</button>
+                           </div>`;
+
+                       area.innerHTML = html;
+                   } else {
+                       area.innerHTML = `<div class="text-center mt-5 text-danger fw-bold"><i class="fas fa-exclamation-triangle fa-3x mb-3"></i><br>Lỗi: ${data.msg}</div>`;
+                   }
+               }).catch(() => area.innerHTML = `<div class="text-center mt-5 text-danger fw-bold">Lỗi mạng! Không thể kết nối.</div>`);
+           }
         // ============================================================
         // LOGIC CHỈNH SỬA SẢN PHẨM
         // ============================================================
+              // Hàm hiển thị trước ảnh khi chọn ở Form Sửa
+        function previewEditImg(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('edit_img_preview').src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // Hàm mở Form Sửa và đổ dữ liệu cũ lên
         function openEditProductModal(maSP) {
-            // Hiển thị loading (tùy chọn)
             Swal.fire({ title: 'Đang tải dữ liệu...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); }});
 
-            // Gọi API lấy dữ liệu cũ lên
             fetch('/Owner/GetProductDetailAPI?maSP=' + maSP)
             .then(res => res.json())
             .then(res => {
                 Swal.close();
                 if(res.success) {
-                    // Đổ dữ liệu vào Form
-                    document.getElementById('edit_MaSP').value = res.data.maSP || res.data.MaSP;
-                    document.getElementById('edit_TenSP').value = res.data.tenSP || res.data.TenSP;
-                    document.getElementById('edit_MaVach').value = res.data.maVach || res.data.MaVach || '';
-                    document.getElementById('edit_GiaNhap').value = res.data.giaNhap || res.data.GiaNhap || 0;
-                    document.getElementById('edit_GiaBan').value = res.data.giaBan || res.data.GiaBan || 0;
+                    var data = res.data;
+                    document.getElementById('edit_MaSP').value = data.maSP || data.MaSP;
+                    document.getElementById('edit_TenSP').value = data.tenSP || data.TenSP;
+                    document.getElementById('edit_MaVach').value = data.maVach || data.MaVach || '';
+                    document.getElementById('edit_GiaNhap').value = data.giaNhap || data.GiaNhap || 0;
+                    document.getElementById('edit_GiaBan').value = data.giaBan || data.GiaBan || 0;
 
-                    // Mở bảng lên
+                    // Đổ Thông số & Bảo hành
+                    document.getElementById('edit_ThongSo').value = data.thongSoChiTiet || data.ThongSoChiTiet || '';
+                    document.getElementById('edit_BaoHanh').value = data.thoiGianBaoHanh || data.ThoiGianBaoHanh || 0;
+
+                    // Xử lý hiện ảnh cũ
+                    var imgUrl = data.hinhAnh || data.HinhAnh;
+                    document.getElementById('edit_img_preview').src = (imgUrl && imgUrl.trim() !== "")
+                        ? imgUrl
+                        : "https://via.placeholder.com/150x150?text=Chua+Co+Anh";
+
+                    // Reset lại ô chọn file (để trống nếu không muốn đổi ảnh)
+                    document.getElementById('edit_FileAnh').value = "";
+
                     new bootstrap.Modal(document.getElementById('modalEditProduct')).show();
                 } else {
                     Swal.fire("Lỗi", res.msg, "error");
@@ -2542,36 +2878,49 @@
             }).catch(() => Swal.fire("Lỗi", "Không kết nối được với Server!", "error"));
         }
 
+        // Hàm bấm nút Lưu thay đổi
         function saveEditProduct() {
             var ma = document.getElementById('edit_MaSP').value;
             var ten = document.getElementById('edit_TenSP').value;
-            var mv = document.getElementById('edit_MaVach').value;
-            var gn = parseFloat(document.getElementById('edit_GiaNhap').value) || 0;
-            var gb = parseFloat(document.getElementById('edit_GiaBan').value) || 0;
 
             if(!ten) { Swal.fire("Thiếu thông tin", "Tên sản phẩm không được để trống!", "warning"); return; }
 
+            // Bắt buộc dùng FormData để chở ảnh qua C#
+            var formData = new FormData();
+            formData.append("MaSP", ma);
+            formData.append("TenSP", ten);
+            formData.append("MaVach", document.getElementById('edit_MaVach').value);
+            formData.append("GiaNhap", document.getElementById('edit_GiaNhap').value);
+            formData.append("GiaBan", document.getElementById('edit_GiaBan').value);
+            formData.append("ThongSoChiTiet", document.getElementById('edit_ThongSo').value);
+            formData.append("ThoiGianBaoHanh", document.getElementById('edit_BaoHanh').value);
+
+            // Gói file ảnh lên xe (Nếu có chọn ảnh mới)
+            var fileInput = document.getElementById('edit_FileAnh');
+            if (fileInput && fileInput.files.length > 0) {
+                formData.append("fileAnh", fileInput.files[0]);
+            }
+
+            Swal.fire({ title: 'Đang lưu cập nhật...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
             fetch('/Owner/UpdateProductAPI', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    MaSP: ma,
-                    TenSP: ten,
-                    MaVach: mv,
-                    GiaNhap: gn,
-                    GiaBan: gb
-                })
+                body: formData // Gửi formData đi
             })
             .then(res => res.json())
             .then(res => {
+                Swal.close();
                 if(res.success) {
                     bootstrap.Modal.getInstance(document.getElementById('modalEditProduct')).hide();
                     Swal.fire("Thành công!", "Đã cập nhật sản phẩm.", "success").then(() => {
-                        location.reload(); // Tải lại trang để thấy thay đổi
+                        location.reload();
                     });
                 } else {
                     Swal.fire("Lỗi", res.msg, "error");
                 }
+            }).catch(err => {
+                Swal.close();
+                Swal.fire("Lỗi", "Lỗi đường truyền!", "error");
             });
         }
                        function deleteProductFromWarehouse(maSP, tenSP) {
@@ -2675,6 +3024,96 @@
         }).catch(function (err) {
             console.error("🔴 SignalR Lỗi Kết Nối: " + err.toString());
         });
+        // Hàm mở cửa sổ xem chi tiết sản phẩm
+        function xemChiTietSP(maSP) {
+            // 1. Tìm sản phẩm trong bộ nhớ (RAM)
+            // (C# trả về JSON đôi khi viết thường chữ cái đầu, nên tui check cả 2 trường hợp)
+            var p = allProducts.find(x => x.MaSP === maSP || x.maSP === maSP);
+
+            if (p) {
+                // 2. Bơm Tên và Giá vào
+                var ten = p.TenSP || p.tenSP;
+                var gia = p.GiaBan || p.giaBan;
+                document.getElementById("detail_TenSP").innerText = ten;
+                document.getElementById("detail_GiaBan").innerText = gia.toLocaleString() + " đ";
+
+                // 3. Bơm Hình ảnh (Nếu rỗng thì xài ảnh mặc định)
+                var imgUrl = p.HinhAnh || p.hinhAnh;
+                document.getElementById("detail_HinhAnh").src = (imgUrl && imgUrl.trim() !== "")
+                    ? imgUrl
+                    : "https://via.placeholder.com/300x300?text=Chua+Co+Anh";
+
+                // 4. Bơm Thông số kỹ thuật
+                var thongSo = p.ThongSoChiTiet || p.thongSoChiTiet;
+                document.getElementById("detail_ThongSo").innerText = (thongSo && thongSo.trim() !== "")
+                    ? thongSo
+                    : "Sản phẩm này chưa được cập nhật thông số chi tiết.";
+
+                // 5. Hiển thị Modal lên màn hình
+                var detailModal = new bootstrap.Modal(document.getElementById('modalChiTietSP'));
+                detailModal.show();
+            } else {
+                Swal.fire("Lỗi", "Không tìm thấy dữ liệu sản phẩm này!", "error");
+            }
+        }
+                // A. Hàm xem trước ảnh khi chọn file (Preview)
+        function previewImg(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('img_preview').src = e.target.result;
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
+        // B. Hàm Lưu sản phẩm mới (Đã sửa để gửi được FILE ảnh qua C#)
+        function saveNewProductERP() {
+            var ma = document.getElementById('new_MaSP').value;
+            var ten = document.getElementById('new_TenSP').value;
+
+            if(!ma || !ten) {
+                Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm hàng và Tên để sinh mã!", "warning");
+                return;
+            }
+
+            // [QUAN TRỌNG]: Dùng FormData để đóng gói cả chữ và FILE
+            var formData = new FormData();
+            formData.append("MaSP", ma);
+            formData.append("TenSP", ten);
+            formData.append("MaVach", document.getElementById('new_MaVach').value);
+            formData.append("DonViTinh", document.getElementById('new_DVT').value);
+            formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
+            formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value);
+            formData.append("GiaBan", document.getElementById('new_GiaBan').value);
+            formData.append("TrangThai", true);
+
+            // Lấy file từ ô input
+            var fileInput = document.getElementById('new_FileAnh');
+            if (fileInput.files.length > 0) {
+                formData.append("fileAnh", fileInput.files[0]);
+            }
+
+            Swal.fire({ title: 'Đang đẩy lên mây...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            fetch('/Owner/CreateProductWithImageAPI', {
+                method: 'POST',
+                body: formData // KHÔNG dùng JSON.stringify, gửi trực tiếp formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                Swal.close();
+                if(res.success) {
+                    Swal.fire("Thành công", res.msg, "success").then(() => location.reload());
+                } else {
+                    Swal.fire("Lỗi", res.msg, "error");
+                }
+            })
+            .catch(err => {
+                Swal.close();
+                Swal.fire("Lỗi", "Không thể kết nối máy chủ!", "error");
+            });
+        }
     </script>
 </body>
 </html>

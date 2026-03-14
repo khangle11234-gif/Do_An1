@@ -34,7 +34,7 @@ namespace Core.Entities
         public int? ThoiGianBaoHanh { get; set; }
         public string? HinhAnh { get; set; }
 
-      
+        public string? ThongSoChiTiet { get; set; }
         // --- QUAN HỆ ---
 
         // [SỬA] Thêm dấu ? để báo hiệu mối quan hệ này là không bắt buộc (Optional)

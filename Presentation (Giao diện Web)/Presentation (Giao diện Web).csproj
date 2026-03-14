@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.22">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Business (Lớp nghiệp vụ)\Business (Lớp nghiệp vụ).csproj" />
     <ProjectReference Include="..\Core (Lớp lõi)\Core (Lớp lõi).csproj" />
     <ProjectReference Include="..\Data (Lớp dữ liệu)\Data (Lớp dữ liệu).csproj" />
