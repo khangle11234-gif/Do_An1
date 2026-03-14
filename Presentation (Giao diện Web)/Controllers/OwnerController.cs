@@ -387,27 +387,32 @@ namespace Presentation.Controllers
         // =========================================================
         // 6. [API] QUẢN LÝ NHÀ CUNG CẤP
         // =========================================================
+
         [HttpPost]
         public IActionResult UpdateSupplierAPI([FromBody] NhaCungCap model)
         {
-            try
+            // 1. Kiểm tra chuỗi bị rỗng hoặc null (Vì MaNCC là kiểu String)
+            if (string.IsNullOrWhiteSpace(model.MaNCC))
             {
-                var ncc = _context.NhaCungCap.Find(model.MaNCC);
-                if (ncc == null) return Json(new { success = false, msg = "Không tìm thấy nhà cung cấp!" });
-
-                ncc.TenNCC = model.TenNCC;
-                ncc.SDT = model.SDT;
-                ncc.DiaChi = model.DiaChi;
-                ncc.GhiChu = model.GhiChu;
-
-                _context.NhaCungCap.Update(ncc);
-                _context.SaveChanges();
-                return Json(new { success = true });
+                return Json(new { success = false, msg = "Lỗi nhận dạng Mã Nhà Cung Cấp!" });
             }
-            catch (Exception ex)
+
+            // 2. Tìm kiếm trong Database (Giữ nguyên)
+            var ncc = _context.NhaCungCap.FirstOrDefault(x => x.MaNCC == model.MaNCC);
+            if (ncc == null)
             {
-                return Json(new { success = false, msg = ex.Message });
+                return Json(new { success = false, msg = "Không tìm thấy nhà cung cấp trong CSDL!" });
             }
+
+            // 3. Cập nhật thông tin
+            ncc.TenNCC = model.TenNCC;
+            ncc.SDT = model.SDT;
+            ncc.DiaChi = model.DiaChi;
+            ncc.GhiChu = model.GhiChu;
+
+            _context.SaveChanges();
+
+            return Json(new { success = true, msg = "Cập nhật thành công" });
         }
 
         [HttpPost]

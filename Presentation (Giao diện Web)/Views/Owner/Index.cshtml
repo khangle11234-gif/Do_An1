@@ -789,67 +789,34 @@
                     </div>
                 </div>
             </div>
-            <div class="modal fade" id="modalEditProduct" tabindex="-1">
-                <div class="modal-dialog modal-lg">
+            <div class="modal fade" id="modalAddSupplier" tabindex="-1">
+                <div class="modal-dialog">
                     <div class="modal-content border-0 shadow-lg">
-                        <div class="modal-header bg-warning text-dark">
-                            <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Cập nhật Sản phẩm cũ</h5>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title fw-bold"><i class="fas fa-plus-circle me-2"></i>Thêm Nhà Cung Cấp</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body p-4">
-                            <div class="row g-3">
-
-                                <div class="col-md-12">
-                                    <div class="p-3 border rounded bg-light border-warning">
-                                        <label class="small fw-bold text-dark d-block mb-2"><i class="fas fa-image me-1"></i> Cập nhật Hình ảnh</label>
-                                        <div class="d-flex align-items-center gap-3">
-                                            <div class="flex-grow-1">
-                                                <input type="file" id="edit_FileAnh" class="form-control" accept="image/*" onchange="previewEditImg(this)">
-                                                <small class="text-muted fst-italic">* Bỏ trống nếu muốn giữ nguyên ảnh cũ</small>
-                                            </div>
-                                            <div class="border rounded bg-white p-1 shadow-sm" style="width: 100px; height: 100px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                                <img id="edit_img_preview" src="https://via.placeholder.com/100x100?text=Loading..." class="img-fluid" style="max-height: 100%;">
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="col-md-4">
-                                    <label class="small fw-bold text-muted">Mã SP (Không đổi)</label>
-                                    <input type="text" id="edit_MaSP" class="form-control bg-light text-danger fw-bold" readonly>
-                                </div>
-                                <div class="col-md-8">
-                                    <label class="small fw-bold text-muted">Tên Sản Phẩm <span class="text-danger">*</span></label>
-                                    <input type="text" id="edit_TenSP" class="form-control border-primary">
-                                </div>
-                                <div class="col-md-12">
-                                    <label class="small fw-bold text-muted">Mã Vạch</label>
-                                    <input type="text" id="edit_MaVach" class="form-control">
-                                </div>
-
-                                <div class="col-md-6">
-                                    <label class="small fw-bold text-success">Giá Nhập (Vốn)</label>
-                                    <input type="number" id="edit_GiaNhap" class="form-control border-success text-success fw-bold" min="0">
-                                </div>
-                                <div class="col-md-6">
-                                    <label class="small fw-bold text-primary">Giá Bán (Lẻ)</label>
-                                    <input type="number" id="edit_GiaBan" class="form-control border-primary text-primary fw-bold" min="0">
-                                </div>
-
-                                <div class="col-md-8">
-                                    <label class="small fw-bold text-muted">Thông số chi tiết</label>
-                                    <textarea id="edit_ThongSo" class="form-control border-info" rows="2" placeholder="Màu sắc, kích thước, chất liệu..."></textarea>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="small fw-bold text-muted">Bảo hành (Tháng)</label>
-                                    <input type="number" id="edit_BaoHanh" class="form-control border-info" placeholder="0" min="0">
-                                </div>
-
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Tên Nhà Cung Cấp <span class="text-danger">*</span></label>
+                                <input type="text" id="new_TenNCC" class="form-control border-success" placeholder="Nhập tên đối tác..." required>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Số Điện Thoại</label>
+                                <input type="text" id="new_SDT" class="form-control bg-light" placeholder="Ví dụ: 0909123456">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label fw-bold text-muted small">Địa Chỉ</label>
+                                <input type="text" id="new_DiaChi" class="form-control bg-light" placeholder="Nhập địa chỉ giao hàng...">
+                            </div>
+                            <div class="mb-0">
+                                <label class="form-label fw-bold text-muted small">Ghi Chú (Chính sách, công nợ...)</label>
+                                <textarea id="new_GhiChu" class="form-control bg-light" rows="3" placeholder="Nhập lưu ý hoặc chính sách của nhà cung cấp này..."></textarea>
                             </div>
                         </div>
-                        <div class="modal-footer bg-light border-0">
-                            <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
-                            <button type="button" class="btn btn-warning px-4 fw-bold" onclick="saveEditProduct()"><i class="fas fa-save me-2"></i>Lưu Thay Đổi</button>
+                        <div class="modal-footer border-0 bg-light p-3">
+                            <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                            <button type="button" class="btn btn-success px-4 fw-bold shadow-sm" onclick="saveNewSupplier()"><i class="fas fa-save me-2"></i>Lưu Nhà Cung Cấp</button>
                         </div>
                     </div>
                 </div>
@@ -1024,15 +991,18 @@
                                 {
                                     foreach (var ncc in Model.DSNhaCungCap)
                                     {
+                                        // GỌT SẠCH KHOẢNG TRẮNG NGAY TỪ ĐẦU
+                                        var cleanMaNCC = ncc.MaNCC.ToString().Trim();
+
                                         <tr>
-                                            <td class="ps-4 fw-bold text-muted">@ncc.MaNCC</td>
+                                            <td class="ps-4 fw-bold text-muted">@cleanMaNCC</td>
                                             <td class="fw-bold text-primary">@ncc.TenNCC</td>
                                             <td><span class="badge bg-light text-dark border"><i class="fas fa-phone-alt me-1 text-muted"></i>@(string.IsNullOrEmpty(ncc.SDT) ? "---" : ncc.SDT)</span></td>
                                             <td>@(string.IsNullOrEmpty(ncc.DiaChi) ? "---" : ncc.DiaChi)</td>
                                             <td class="text-muted small">@ncc.GhiChu</td>
                                             <td class="text-end pe-4">
-                                                <button class="btn btn-action text-warning me-1" data-bs-toggle="modal" data-bs-target="#editNCC_@ncc.MaNCC" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
-                                                <button class="btn btn-action text-danger" onclick="deleteSupplier('@ncc.MaNCC')" title="Xóa"><i class="fas fa-trash-alt"></i></button>
+                                                <button class="btn btn-action text-warning me-1" data-bs-toggle="modal" data-bs-target="#editNCC_@cleanMaNCC" title="Sửa thông tin"><i class="fas fa-edit"></i></button>
+                                                <button class="btn btn-action text-danger" onclick="deleteSupplier('@cleanMaNCC')" title="Xóa"><i class="fas fa-trash-alt"></i></button>
                                             </td>
                                         </tr>
                                     }
@@ -1050,19 +1020,36 @@
                 {
                     foreach (var ncc in Model.DSNhaCungCap)
                     {
-                        <div class="modal fade" id="editNCC_@ncc.MaNCC" tabindex="-1" aria-hidden="true">
+                        // GỌT SẠCH KHOẢNG TRẮNG Ở KHU VỰC MODAL
+                        var cleanMaNCC = ncc.MaNCC.ToString().Trim();
+
+                        <div class="modal fade" id="editNCC_@cleanMaNCC" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content border-0 shadow-lg">
-                                    <form id="formEditNCC_@ncc.MaNCC" onsubmit="submitEditSupplier(event, '@ncc.MaNCC')">
+                                    <form id="formEditNCC_@ncc.MaNCC.ToString().Trim()" onsubmit="submitEditSupplier(event, '@ncc.MaNCC.ToString().Trim()')">
+                                        <input type="hidden" name="MaNCC" value="@ncc.MaNCC.ToString().Trim()" />
+
                                         <div class="modal-header bg-secondary text-white">
                                             <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2"></i>Sửa thông tin: @ncc.TenNCC</h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
                                         <div class="modal-body p-4">
-                                            <div class="mb-3"><label class="form-label text-muted fw-bold small">Tên Nhà Cung Cấp <span class="text-danger">*</span></label><input type="text" class="form-control" name="TenNCC" value="@ncc.TenNCC" required /></div>
-                                            <div class="mb-3"><label class="form-label text-muted fw-bold small">Số Điện Thoại</label><input type="text" class="form-control" name="SDT" value="@ncc.SDT" /></div>
-                                            <div class="mb-3"><label class="form-label text-muted fw-bold small">Địa Chỉ</label><input type="text" class="form-control" name="DiaChi" value="@ncc.DiaChi" /></div>
-                                            <div class="mb-3"><label class="form-label text-muted fw-bold small">Ghi Chú</label><textarea class="form-control" name="GhiChu" rows="2">@ncc.GhiChu</textarea></div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-bold small">Tên Nhà Cung Cấp <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" name="TenNCC" value="@ncc.TenNCC" required />
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-bold small">Số Điện Thoại</label>
+                                                <input type="text" class="form-control" name="SDT" value="@ncc.SDT" />
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-bold small">Địa Chỉ</label>
+                                                <input type="text" class="form-control" name="DiaChi" value="@ncc.DiaChi" />
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label text-muted fw-bold small">Ghi Chú</label>
+                                                <textarea class="form-control" name="GhiChu" rows="2">@ncc.GhiChu</textarea>
+                                            </div>
                                         </div>
                                         <div class="modal-footer bg-light border-0">
                                             <button type="button" class="btn btn-light border px-4" data-bs-dismiss="modal">Hủy</button>
@@ -2712,12 +2699,35 @@
               });
           }
 
-        function submitEditSupplier(event, maNCC) {
-            event.preventDefault(); var fd = new FormData(document.getElementById('formEditNCC_' + maNCC));
-            fetch('/Owner/UpdateSupplierAPI', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ MaNCC: maNCC, TenNCC: fd.get("TenNCC"), SDT: fd.get("SDT"), DiaChi: fd.get("DiaChi"), GhiChu: fd.get("GhiChu") }) })
-            .then(res => res.json()).then(data => {
-                if(data.success) { Swal.fire({icon:'success', title:'Cập nhật thành công', showConfirmButton: false, timer:1500}).then(() => location.reload()); }
-                else { Swal.fire('Lỗi', data.msg, 'error'); }
+       function submitEditSupplier(event, maNCC) {
+            event.preventDefault();
+
+            var cleanMaNCC = String(maNCC).trim();
+            var form = document.getElementById('formEditNCC_' + cleanMaNCC);
+            var fd = new FormData(form);
+
+            var payload = {
+                MaNCC: cleanMaNCC, // <--- SỬA CHỖ NÀY: Bỏ chữ parseInt() đi, để nguyên biến cleanMaNCC
+                TenNCC: fd.get("TenNCC"),
+                SDT: fd.get("SDT"),
+                DiaChi: fd.get("DiaChi"),
+                GhiChu: fd.get("GhiChu")
+            };
+
+            fetch('/Owner/UpdateSupplierAPI', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({icon:'success', title:'Cập nhật thành công', showConfirmButton: false, timer:1500})
+                    .then(() => location.reload());
+                }
+                else {
+                    Swal.fire('Lỗi từ Server', data.msg, 'error');
+                }
             });
         }
 
