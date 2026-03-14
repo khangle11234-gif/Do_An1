@@ -2,22 +2,28 @@
 @{
     Layout = null;
     ViewData["Title"] = "Trang Bán Hàng - Nhân Viên";
+    var currentUserId = Context.Session.GetString("MaND");
     var theme = ViewBag.ThemeConfig as Core.Entities.CauHinhHeThong;
     var tenCuaHang = theme?.TenCuaHang ?? "SMART WAREHOUSE";
     var mauChuDao = theme?.MauChuDao ?? "#2c3e50";
     var mauNhan = theme?.MauNhan ?? "#3498db";
     var mauNen = theme?.MauNen ?? "#f4f6f9";
 
+    // Truyền dữ liệu SP xuống JS
     var productsJson = Model.DSSanPham != null
         ? System.Text.Json.JsonSerializer.Serialize(Model.DSSanPham.Select(x => new
         {
             MaSP = x.MaSP != null ? x.MaSP.Trim() : "",
             x.TenSP,
             x.MaVach,
+            x.GiaNhap,
             GiaBan = x.GiaBan ?? 0,
             x.DonViTinh,
             SoLuongTon = x.SoLuongTon ?? 0,
-            x.TrangThai
+            TrangThai = x.TrangThai ?? false,
+            HinhAnh = x.HinhAnh ?? "",
+            ThongSoChiTiet = x.ThongSoChiTiet ?? "",
+            ThoiGianBaoHanh = x.ThoiGianBaoHanh ?? 0
         })) : "[]";
 }
 
@@ -26,15 +32,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ Thống Bán Hàng | POS</title>
+    <title>Hệ Thống Quản Lý | Bán Hàng</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --primary-color: @mauChuDao;
             --accent-color: @mauNhan;
             --bg-light: @mauNen;
+        }
+
+        .card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-info):not(.bg-warning),
+        .stat-card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-info):not(.bg-warning),
+        .modal-content, .sidebar {
+            background-color: var(--bg-light) !important;
+        }
+
+        .bg-white {
+            background-color: var(--bg-light) !important;
+        }
+
+        .table {
+            --bs-table-bg: transparent !important;
+        }
+
+        .table-custom th, .table-light th {
+            background-color: rgba(0,0,0,0.03) !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-custom td, .table td {
+            background-color: transparent !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-hover > tbody > tr:hover > * {
+            background-color: rgba(0,0,0,0.05) !important;
         }
 
         body {
@@ -43,8 +78,9 @@
             overflow: hidden;
         }
 
+        /* SIDEBAR */
         .sidebar {
-            width: 250px;
+            width: 260px;
             background: var(--bg-light);
             height: 100vh;
             position: fixed;
@@ -54,35 +90,111 @@
             flex-direction: column;
         }
 
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+            .sidebar-header h5 {
+                font-weight: 800;
+                color: var(--primary-color);
+                margin: 0;
+                letter-spacing: -0.5px;
+            }
+
+        .sidebar-menu-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 15px 0;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        /* MAIN CONTENT */
         .main-content {
-            margin-left: 250px;
+            margin-left: 260px;
             height: 100vh;
             overflow-y: auto;
             padding: 30px;
         }
 
+        /* NAV LINKS */
         .nav-link {
             color: #555;
             padding: 12px 20px;
             margin: 4px 10px;
             border-radius: 8px;
-            font-weight: 600;
+            font-weight: 500;
             display: flex;
             align-items: center;
+            transition: all 0.2s;
             cursor: pointer;
         }
 
             .nav-link i {
                 width: 30px;
                 font-size: 1.1rem;
+                color: #95a5a6;
+            }
+
+            .nav-link:hover {
+                background-color: rgba(0,0,0,0.03);
+                color: var(--primary-color);
             }
 
             .nav-link.active {
                 background-color: var(--primary-color);
                 color: white;
-                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
             }
 
+                .nav-link.active i {
+                    color: #ecf0f1;
+                }
+
+        .stat-card {
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        .btn-action {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--bg-light);
+            transition: 0.2s;
+        }
+
+            .btn-action:hover {
+                background: rgba(0,0,0,0.05);
+            }
+
+        /* POS STYLES */
         .pos-item-card {
             border: 1px solid rgba(0,0,0,0.1);
             border-radius: 8px;
@@ -95,140 +207,178 @@
                 transform: translateY(-2px);
                 box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }
-        /* Ẩn bớt thanh cuộn cho đẹp */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
 
-        ::-webkit-scrollbar-thumb {
-            background: #ccc;
-            border-radius: 4px;
+        .pos-qty-input::-webkit-outer-spin-button, .pos-qty-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
         }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="p-4 border-bottom">
-            <h5 class="fw-bold text-primary mb-1"><i class="fas fa-cubes me-2"></i>@tenCuaHang</h5>
-            <small class="text-muted">Khu vực Nhân Viên Bán Hàng</small>
+        <div class="sidebar-header">
+            <h5><i class="fas fa-store me-2"></i>@tenCuaHang</h5>
+            <small class="text-success fw-bold"><i class="fas fa-user-tag me-1"></i>Quầy Thu Ngân</small>
         </div>
-        <div class="flex-grow-1 py-3">
-            <div class="nav flex-column nav-pills" role="tablist">
-                <a class="nav-link active" data-bs-toggle="pill" href="#tab-pos" onclick="renderPosProducts()"><i class="fas fa-cash-register"></i> Máy Bán Hàng (POS)</a>
-                <a class="nav-link" data-bs-toggle="pill" href="#tab-products"><i class="fas fa-box"></i> Tra cứu Sản phẩm</a>
+
+        <div class="sidebar-menu-area">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-2" style="font-size: 0.75rem;">Giao dịch</small>
+                <a class="nav-link active" data-bs-toggle="pill" href="#tab-pos" id="link-tab-pos" onclick="renderPosProducts()"><i class="fas fa-cash-register"></i> Máy bán hàng (POS)</a>
+
+                <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-3" style="font-size: 0.75rem;">Thông tin</small>
+                <a class="nav-link" data-bs-toggle="pill" href="#tab-products"><i class="fas fa-search"></i> Tra cứu hàng hóa</a>
             </div>
         </div>
-        <div class="p-4 border-top">
+
+        <div class="sidebar-footer">
             <div class="d-flex align-items-center mb-3">
-                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;"><i class="fas fa-user-tag"></i></div>
-                <div><div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div><small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Ca làm việc</small></div>
+                <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;"><i class="fas fa-user"></i></div>
+                <div><div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div><small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Đang ca trực</small></div>
             </div>
             <a href="/Home/Logout" class="btn btn-outline-danger w-100 btn-sm"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a>
         </div>
     </div>
 
     <div class="main-content">
-        <div class="tab-content">
+        <div class="tab-content" id="v-pills-tabContent">
 
             <div class="tab-pane fade show active" id="tab-pos">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="fw-bold text-info"><i class="fas fa-cash-register me-2"></i>Bán Hàng Tại Quầy</h3>
+                <div class="section-header">
+                    <div class="section-title text-info"><i class="fas fa-cash-register me-2"></i>Bán hàng (POS)</div>
+                    <button class="btn btn-outline-info shadow-sm fw-bold" onclick="openInvoiceHistoryModal()"><i class="fas fa-receipt me-2"></i>Xem Lịch Sử Hóa Đơn</button>
                 </div>
+
                 <div class="row g-3">
                     <div class="col-md-7">
-                        <div class="card h-100 border-0 p-3 shadow-sm">
+                        <div class="card stat-card h-100 border-0 p-3">
                             <div class="mb-3">
                                 <div class="input-group input-group-lg shadow-sm">
                                     <span class="input-group-text bg-white border-end-0"><i class="fas fa-search text-info"></i></span>
-                                    <input type="text" class="form-control border-start-0" id="searchPosProduct" placeholder="Tìm tên sản phẩm, quét mã vạch..." onkeyup="filterPosProducts()">
+                                    <input type="text" class="form-control border-start-0" id="searchPosProduct" placeholder="Tìm tên sản phẩm, quét mã vạch..." onkeyup="filterPosProducts()" autofocus>
                                 </div>
                             </div>
-                            <div class="row g-3" id="posProductGrid" style="max-height: 70vh; overflow-y: auto;"></div>
+                            <div class="row g-3" id="posProductGrid" style="max-height: 60vh; overflow-y: auto;"></div>
                         </div>
                     </div>
+
                     <div class="col-md-5">
-                        <div class="card h-100 border-0 bg-white shadow-sm p-3 border-top border-4 border-info">
+                        <div class="card stat-card h-100 border-0 bg-light p-3">
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <h6 class="fw-bold mb-0 text-info"><i class="fas fa-shopping-cart me-2"></i>Giỏ hàng hiện tại</h6>
-                                <span class="badge bg-primary rounded-pill" id="posTotalQuantity">0 SP</span>
+                                <span class="badge bg-primary rounded-pill">Hóa đơn mới</span>
                             </div>
-                            <div class="table-responsive flex-grow-1 border rounded bg-light" style="max-height: 45vh; overflow-y: auto;">
+
+                            <div class="table-responsive flex-grow-1 bg-white border rounded" style="max-height: 40vh; overflow-y: auto;">
                                 <table class="table table-hover align-middle mb-0">
-                                    <thead class="bg-white sticky-top">
-                                        <tr class="text-center small text-muted"><th class="text-start ps-3">Sản phẩm</th><th>SL</th><th>Tổng</th><th></th></tr>
+                                    <thead class="bg-light sticky-top">
+                                        <tr class="text-center small">
+                                            <th class="text-start ps-3" style="width: 40%">Sản phẩm</th>
+                                            <th style="width: 25%">Số lượng</th>
+                                            <th style="width: 25%">Đơn giá</th>
+                                            <th style="width: 10%"></th>
+                                        </tr>
                                     </thead>
                                     <tbody id="posCartTable">
                                         <tr><td colspan="4" class="text-center text-muted py-5"><i class="fas fa-cart-arrow-down fa-3x mb-2 opacity-25"></i><br>Chưa có sản phẩm nào.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
+
                             <hr class="border-secondary opacity-25 my-3">
+
+                            <div class="d-flex justify-content-between mb-2 small text-muted">
+                                <span>Tổng số lượng:</span>
+                                <span class="fw-bold text-dark" id="posTotalQuantity">0</span>
+                            </div>
                             <div class="d-flex justify-content-between align-items-end mb-4">
-                                <span class="h6 mb-0 fw-bold text-muted">Khách cần trả:</span>
+                                <span class="h6 mb-0 fw-bold">Khách cần trả:</span>
                                 <span class="h2 mb-0 fw-bold text-danger" id="posTotalAmount">0 ₫</span>
                             </div>
-                            <button class="btn btn-info w-100 py-3 fw-bold text-white fs-5 shadow-sm mb-2" onclick="openPaymentModal()"><i class="fas fa-check-circle me-2"></i> THANH TOÁN (F9)</button>
-                            <button class="btn btn-outline-danger w-100 py-2 fw-bold" onclick="clearPosCart()"><i class="fas fa-trash-alt"></i> Hủy đơn (F4)</button>
+
+                            <div class="mb-3">
+                                <textarea id="posNote" class="form-control" rows="2" placeholder="Ghi chú hóa đơn (nếu có)..."></textarea>
+                            </div>
+
+                            <div class="row g-2">
+                                <div class="col-12 mb-2">
+                                    <button class="btn btn-info w-100 py-3 fw-bold text-white fs-5 shadow-sm" onclick="openPaymentModal()">
+                                        <i class="fas fa-qrcode me-2"></i> THANH TOÁN & IN HĐ
+                                    </button>
+                                </div>
+                                <div class="col-12">
+                                    <button class="btn btn-outline-danger w-100 py-2 fw-bold" onclick="clearPosCart()">
+                                        <i class="fas fa-trash-alt"></i> Hủy đơn hàng
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="tab-pane fade" id="tab-products">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h3 class="fw-bold text-success"><i class="fas fa-box-open me-2"></i>Bảng Giá Sản Phẩm</h3>
-                    <div class="input-group w-25 shadow-sm">
-                        <span class="input-group-text bg-white"><i class="fas fa-search text-muted"></i></span>
-                        <input type="text" class="form-control border-start-0" id="searchTableInput" placeholder="Tìm nhanh..." onkeyup="filterTable()">
-                    </div>
+                <div class="section-header">
+                    <div class="section-title text-success"><i class="fas fa-search me-2"></i>Tra cứu Hàng hóa & Giá bán</div>
+                    <span class="badge bg-light text-dark border p-2"><i class="fas fa-eye text-primary me-1"></i> Chế độ Chỉ xem</span>
                 </div>
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body table-responsive p-0" style="max-height: 75vh; overflow-y: auto;">
-                        <table class="table table-hover align-middle text-center mb-0" id="productTable">
-                            <thead class="table-light sticky-top">
-                                <tr><th>Mã SP</th><th class="text-start">Tên Sản Phẩm</th><th>Mã Vạch</th><th>ĐVT</th><th>Tồn Kho</th><th class="bg-warning bg-opacity-25 text-dark">Giá Bán Lẻ</th><th>Trạng Thái</th></tr>
+
+                <div class="card stat-card border-0">
+                    <div class="card-body table-responsive p-0">
+                        <table class="table table-hover table-custom align-middle text-center mb-0">
+                            <thead class="table-light">
+                                <tr><th>Mã SP</th><th class="text-start">Tên Sản Phẩm</th><th>Mã Vạch</th><th>ĐVT</th><th>Tồn Kho</th><th class="bg-warning text-dark bg-opacity-25">Giá Bán Lẻ</th><th>Trạng Thái</th><th>Chi tiết</th></tr>
                             </thead>
                             <tbody>
                                 @if (Model.DSSanPham != null && Model.DSSanPham.Any())
                                 {
                                     foreach (var item in Model.DSSanPham)
                                     {
+                                        string maSP = item.MaSP != null ? item.MaSP.Trim() : "";
                                         <tr>
-                                            <td class="fw-bold text-secondary">@item.MaSP</td>
-                                            <td class="text-start fw-bold text-primary">@item.TenSP</td>
-                                            <td class="text-muted">@(string.IsNullOrEmpty(item.MaVach) ? "---" : item.MaVach)</td>
+                                            <td class="fw-bold text-secondary">@maSP</td>
+                                            <td class="text-start fw-bold text-primary" id="name_text_@maSP">@item.TenSP</td>
+                                            <td>@(string.IsNullOrEmpty(item.MaVach) ? "---" : item.MaVach)</td>
                                             <td>@item.DonViTinh</td>
                                             <td>
                                                 @if (item.SoLuongTon > 10)
                                                 {
-                                                    <span class="badge bg-success">@item.SoLuongTon</span>
+                                                    <span class="badge bg-success bg-opacity-10 text-success px-2 py-1">@item.SoLuongTon</span>
                                                 }
                                                 else if (item.SoLuongTon > 0)
                                                 {
 
-                                                    <span class="badge bg-warning text-dark">@item.SoLuongTon (Sắp hết)</span>
+                                                    <span class="badge bg-warning bg-opacity-10 text-warning px-2 py-1">@item.SoLuongTon (Sắp hết)</span>
                                                 }
                                                 else
                                                 {
 
-                                                    <span class="badge bg-danger">Hết hàng</span>
+                                                    <span class="badge bg-danger bg-opacity-10 text-danger px-2 py-1">0 (Hết)</span>
                                                 }
                                             </td>
-                                            <td class="text-danger fw-bold fs-5">@(item.GiaBan.HasValue? item.GiaBan.Value.ToString("N0") : "0") đ</td>
-                                            <td>
+
+                                            <td class="text-danger fw-bold fs-5 bg-warning bg-opacity-10" id="price_text_@maSP">@(item.GiaBan.HasValue? item.GiaBan.Value.ToString("N0") : "0") đ</td>
+
+                                            <td id="status_col_@maSP">
                                                 @if (item.TrangThai == true)
                                                 {
-                                                    <span class="badge border border-success text-success bg-success bg-opacity-10 px-3 py-2"><i class="fas fa-check-circle me-1"></i>Đang bán</span>
+                                                    <span id="status_text_@maSP" class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Đang bán</span>
                                                 }
                                                 else
                                                 {
-
-                                                    <span class="badge border border-danger text-danger bg-danger bg-opacity-10 px-3 py-2"><i class="fas fa-lock me-1"></i>Ngừng bán</span>
+                                                    <span id="status_text_@maSP" class="badge bg-danger"><i class="fas fa-lock me-1"></i>Ngừng bán</span>
                                                 }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-action text-info" onclick="xemChiTietSP('@maSP')" title="Xem thông số kỹ thuật"><i class="fas fa-eye"></i></button>
                                             </td>
                                         </tr>
                                     }
+                                }
+                                else
+                                {
+                                    <tr><td colspan="8" class="text-center text-muted py-5"><i class="fas fa-box-open fa-3x mb-3 opacity-25"></i><br />Chưa có sản phẩm nào.</td></tr>
                                 }
                             </tbody>
                         </table>
@@ -239,50 +389,82 @@
         </div>
     </div>
 
-   
     <div class="modal fade" id="paymentModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
                 <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title fw-bold"><i class="fas fa-qrcode me-2"></i>Xác nhận & Thanh toán</h5>
+                    <h5 class="modal-title fw-bold"><i class="fas fa-qrcode me-2"></i>Xác nhận Thanh toán</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-4 text-center">
-                    <h3 class="text-danger fw-bold mb-4" id="qrTotalAmount">0 ₫</h3>
-
-                    <div class="bg-light p-3 rounded text-start mb-4 border">
-                        <h6 class="fw-bold mb-3 text-secondary"><i class="fas fa-university me-1"></i> Thông tin chuyển khoản</h6>
-
-                        <input type="hidden" id="qrBank" value="@(theme?.NganHang ?? "")">
-                        <input type="hidden" id="qrAccount" value="@(theme?.SoTaiKhoan ?? "")">
-                        <input type="hidden" id="qrName" value="@(theme?.TenChuTaiKhoan ?? "")">
-
-                        <div class="mb-2">
-                            <span class="text-muted small">Ngân hàng:</span>
-                            <strong class="text-primary ms-2 fs-5">@(theme?.NganHang ?? "Chưa cấu hình")</strong>
-                        </div>
-                        <div class="mb-2">
-                            <span class="text-muted small">Số tài khoản:</span>
-                            <strong class="text-dark ms-2 fs-5">@(theme?.SoTaiKhoan ?? "Chưa cấu hình")</strong>
-                        </div>
-                        <div>
-                            <span class="text-muted small">Chủ tài khoản:</span>
-                            <strong class="text-uppercase ms-2">@(theme?.TenChuTaiKhoan ?? "Chưa cấu hình")</strong>
-                        </div>
-                    </div>
+                    <h3 class="text-danger fw-bold mb-3" id="qrTotalAmount">0 ₫</h3>
 
                     <div id="qrImageContainer" style="display: none;">
-                        <p class="text-success fw-bold small mb-2"><i class="fas fa-camera me-1"></i> Khách hàng quét mã dưới đây</p>
-                        <img id="qrImage" src="" alt="Mã QR" class="img-fluid border border-2 border-info p-2 rounded bg-white shadow-sm" style="max-width: 250px;">
+                        <p class="text-success fw-bold small mb-2"><i class="fas fa-camera me-1"></i> Đưa mã này cho khách hàng quét</p>
+                        <img id="qrImage" src="" alt="Mã QR" class="img-fluid border border-2 border-info p-2 rounded bg-white shadow-sm" style="max-width: 220px;">
                     </div>
 
-                    <div class="mt-3">
-                        <textarea id="posNote" class="form-control mb-3" rows="2" placeholder="Ghi chú hóa đơn (Ví dụ: Khách chuyển khoản, Tiền mặt...)..." oninput="generateQR()"></textarea>
-                    </div>
+                    <input type="hidden" id="qrBank" value="@(ViewBag.ThemeConfig?.NganHang ?? "")">
+                    <input type="hidden" id="qrAccount" value="@(ViewBag.ThemeConfig?.SoTaiKhoan ?? "")">
+                    <input type="hidden" id="qrName" value="@(ViewBag.ThemeConfig?.TenChuTaiKhoan ?? "")">
                 </div>
                 <div class="modal-footer bg-light border-0 d-flex justify-content-between">
                     <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Thoát</button>
                     <button type="button" class="btn btn-info fw-bold text-white px-4" onclick="confirmPaymentAndSave()"><i class="fas fa-check-circle me-1"></i> Xác nhận & Lưu HĐ</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="invoiceHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-file-invoice-dollar me-2"></i>Lịch sử Hóa đơn</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="row g-0 h-100">
+                        <div class="col-md-4 border-end bg-light" style="max-height: 65vh; overflow-y: auto;">
+                            <div class="list-group list-group-flush rounded-0" id="invoiceList"><div class="p-4 text-center text-muted">Đang tải dữ liệu...</div></div>
+                        </div>
+                        <div class="col-md-8" style="max-height: 65vh; overflow-y: auto; background: var(--bg-light);">
+                            <div class="p-4" id="invoiceDetailArea">
+                                <div class="text-center text-muted mt-5">
+                                    <i class="fas fa-receipt fa-4x mb-3 opacity-25"></i>
+                                    <h5>Chọn một hóa đơn bên trái để xem</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalChiTietSP" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Thông Tin Sản Phẩm</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row">
+                        <div class="col-md-5 text-center mb-3 mb-md-0">
+                            <img id="detail_HinhAnh" src="https://via.placeholder.com/300x300?text=Chua+Co+Anh" class="img-fluid rounded shadow-sm border" style="max-height: 350px; object-fit: cover; width: 100%;" alt="Hình sản phẩm">
+                        </div>
+                        <div class="col-md-7">
+                            <h4 id="detail_TenSP" class="fw-bold text-primary mb-2">Tên Sản Phẩm</h4>
+                            <h5 id="detail_GiaBan" class="text-danger fw-bold mb-3">0 đ</h5>
+                            <hr>
+                            <h6 class="fw-bold text-secondary mb-2"><i class="fas fa-list-ul me-2"></i>Thông số kỹ thuật:</h6>
+                            <pre id="detail_ThongSo" class="bg-light p-3 rounded border text-dark" style="font-family: 'Inter', sans-serif; font-size: 0.95rem; white-space: pre-wrap; min-height: 120px; border-left: 4px solid #0d6efd !important;">Đang tải...</pre>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
@@ -296,31 +478,61 @@
         var allProducts = @Html.Raw(productsJson);
         var posCart = [];
 
+        // Thông tin công ty cho Hóa Đơn
+        var globalStoreInfo = { Ten: "@tenCuaHang", DiaChi: "Chi nhánh chính", Hotline: "---", MST: "---" };
+
         document.addEventListener("DOMContentLoaded", function () {
+            // Lấy thông tin cửa hàng từ Server
+            fetch('/Owner/GetStoreInfoAPI').then(res => res.json()).then(res => {
+                if(res.success && res.data) globalStoreInfo = res.data;
+            });
             renderPosProducts();
         });
 
-        // LOGIC TÌM KIẾM TRONG BẢNG SẢN PHẨM
-        function filterTable() {
-            var input = document.getElementById("searchTableInput").value.toLowerCase();
-            var rows = document.querySelectorAll("#productTable tbody tr");
-            rows.forEach(row => {
-                var text = row.innerText.toLowerCase();
-                row.style.display = text.includes(input) ? "" : "none";
-            });
-        }
-
         // ============================================================
-        // LOGIC BÁN HÀNG (POS) GIỮ NGUYÊN HOÀN TOÀN
+        // LOGIC BÁN HÀNG (POS)
         // ============================================================
         function renderPosProducts() {
-            var grid = document.getElementById("posProductGrid"); if (!grid) return;
+            var grid = document.getElementById("posProductGrid");
+            if (!grid) return;
+
             var keyword = document.getElementById("searchPosProduct").value.toLowerCase();
             grid.innerHTML = "";
+
             var filtered = allProducts.filter(p => p.TrangThai === true && p.SoLuongTon > 0 && (p.TenSP.toLowerCase().includes(keyword) || p.MaSP.toLowerCase().includes(keyword)));
-            if(filtered.length === 0) { grid.innerHTML = `<div class="col-12 py-5 text-center text-muted">Không tìm thấy sản phẩm.</div>`; return; }
+
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-12 py-5 text-center text-muted">Không tìm thấy sản phẩm hoặc hết hàng.</div>`;
+                return;
+            }
+
             filtered.forEach(p => {
-                grid.innerHTML += `<div class="col-md-4 col-sm-6"><div class="card h-100 pos-item-card position-relative" onclick="addToPosCart('${p.MaSP}')"><div class="card-body p-3 text-center"><span class="badge bg-success position-absolute top-0 end-0 m-2">Tồn: ${p.SoLuongTon}</span><div class="mb-2"><i class="fas fa-box fa-3x text-info opacity-75"></i></div><h6 class="fw-bold mb-1 text-truncate" title="${p.TenSP}">${p.TenSP}</h6><p class="text-danger fw-bold mb-0 fs-6">${(p.GiaBan).toLocaleString()} ₫</p></div></div></div>`;
+                var imgUrl = p.HinhAnh || p.hinhAnh;
+                var hinhAnhHtml = (imgUrl && imgUrl.trim() !== "")
+                    ? `<img src="${imgUrl}" class="img-fluid rounded mb-2 shadow-sm" style="height: 70px; width: 100%; object-fit: contain;" alt="Ảnh SP">`
+                    : `<div class="mb-2"><i class="fas fa-box fa-3x text-info opacity-75"></i></div>`;
+
+                var ten = p.TenSP || p.tenSP;
+                var gia = p.GiaBan || p.giaBan || 0;
+                var ton = p.SoLuongTon || p.soLuongTon || 0;
+                var ma = p.MaSP || p.maSP;
+
+                grid.innerHTML += `
+                    <div class="col-md-4 col-sm-6">
+                        <div class="card h-100 pos-item-card position-relative border-0 shadow-sm">
+                            <span class="badge bg-success position-absolute top-0 end-0 m-2 z-1">Tồn: ${ton}</span>
+                            <div class="card-body p-3 text-center" onclick="addToPosCart('${ma}')" style="cursor: pointer;">
+                                ${hinhAnhHtml}
+                                <h6 class="fw-bold mb-1 text-truncate" title="${ten}">${ten}</h6>
+                                <p class="text-danger fw-bold mb-0 fs-6">${gia.toLocaleString()} ₫</p>
+                            </div>
+                            <div class="card-footer bg-white border-top-0 pt-0">
+                                <button class="btn btn-sm btn-outline-info w-100 fw-bold" onclick="xemChiTietSP('${ma}'); event.stopPropagation();">
+                                    <i class="fas fa-search-plus me-1"></i> Xem thông số
+                                </button>
+                            </div>
+                        </div>
+                    </div>`;
             });
         }
 
@@ -329,119 +541,324 @@
         function addToPosCart(maSP) {
             var p = allProducts.find(x => x.MaSP === maSP); if(!p) return;
             var item = posCart.find(x => x.MaSP === maSP);
-            if(item) { if(item.SoLuong + 1 > p.SoLuongTon) { Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Vượt quá tồn!', showConfirmButton: false, timer: 2000}); return; } item.SoLuong++; }
+            if(item) {
+                if(item.SoLuong + 1 > p.SoLuongTon) { Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Vượt quá tồn kho!', showConfirmButton: false, timer: 2000}); return; }
+                item.SoLuong++;
+            }
             else { posCart.push({ MaSP: p.MaSP, TenSP: p.TenSP, GiaBan: p.GiaBan, SoLuong: 1, TonKho: p.SoLuongTon }); }
-            Swal.fire({toast:true, position: 'top-end', icon: 'success', title: 'Đã thêm', showConfirmButton: false, timer: 500}); updatePosUI();
+            updatePosUI();
+
+            // Play âm thanh tít tít nhỏ
+            var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.volume = 0.5; audio.play().catch(e => {});
         }
 
         function updatePosUI() {
-            var tbody = document.getElementById("posCartTable"); tbody.innerHTML = ""; var totalQ = 0; var totalM = 0;
-            if(posCart.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-5">Chưa có sản phẩm.</td></tr>`; }
-            else {
-                posCart.forEach((c, i) => {
-                    totalQ += parseInt(c.SoLuong); totalM += (c.SoLuong * c.GiaBan);
-                    tbody.innerHTML += `<tr class="text-center"><td class="text-start ps-3"><div class="fw-bold text-dark text-truncate" style="max-width: 120px;">${c.TenSP}</div></td><td><div class="d-flex align-items-center justify-content-center"><button class="btn btn-sm btn-light border p-1" onclick="changePosQty(${i}, -1)"><i class="fas fa-minus"></i></button><input type="number" class="form-control form-control-sm text-center mx-1 fw-bold border bg-white" value="${c.SoLuong}" style="width: 50px;" onchange="updatePosQtyDirect(${i}, this.value)" onclick="this.select()"><button class="btn btn-sm btn-light border p-1" onclick="changePosQty(${i}, 1)"><i class="fas fa-plus"></i></button></div></td><td class="fw-bold text-danger">${(c.GiaBan * c.SoLuong).toLocaleString()}</td><td><button class="btn btn-sm text-danger" onclick="removePosItem(${i})"><i class="fas fa-times"></i></button></td></tr>`;
-                });
-            }
-            document.getElementById("posTotalQuantity").innerText = totalQ + " SP"; document.getElementById("posTotalAmount").innerText = totalM.toLocaleString() + " ₫";
-        }
+             var tbody = document.getElementById("posCartTable");
+             tbody.innerHTML = "";
+             var totalQ = 0; var totalM = 0;
+
+             if(posCart.length === 0) {
+                 tbody.innerHTML = `<tr><td colspan="4" class="text-center text-muted py-5"><i class="fas fa-cart-arrow-down fa-3x mb-2 opacity-25"></i><br>Chưa có sản phẩm nào.</td></tr>`;
+             } else {
+                 posCart.forEach((c, i) => {
+                     totalQ += parseInt(c.SoLuong); totalM += (c.SoLuong * c.GiaBan);
+                     tbody.innerHTML += `
+                         <tr class="text-center">
+                             <td class="text-start ps-3">
+                                 <div class="fw-bold text-dark text-truncate" style="max-width: 120px;" title="${c.TenSP}">${c.TenSP}</div>
+                                 <small class="text-muted">${c.MaSP}</small>
+                             </td>
+                             <td>
+                                 <div class="d-flex align-items-center justify-content-center">
+                                     <button class="btn btn-sm btn-light border p-1" onclick="changePosQty(${i}, -1)"><i class="fas fa-minus"></i></button>
+                                     <input type="number" class="form-control form-control-sm text-center mx-1 fw-bold border bg-light" value="${c.SoLuong}" style="width: 60px; padding: 2px;" onchange="updatePosQtyDirect(${i}, this.value)" onclick="this.select()">
+                                     <button class="btn btn-sm btn-light border p-1" onclick="changePosQty(${i}, 1)"><i class="fas fa-plus"></i></button>
+                                 </div>
+                             </td>
+                             <td class="fw-bold text-danger">${(c.GiaBan * c.SoLuong).toLocaleString()}</td>
+                             <td><button class="btn btn-sm text-danger" onclick="removePosItem(${i})"><i class="fas fa-times"></i></button></td>
+                         </tr>`;
+                 });
+             }
+             document.getElementById("posTotalQuantity").innerText = totalQ;
+             document.getElementById("posTotalAmount").innerText = totalM.toLocaleString() + " ₫";
+         }
 
         function updatePosQtyDirect(i, val) {
             var item = posCart[i]; var newQty = parseInt(val);
             if (isNaN(newQty) || newQty <= 0) newQty = 1;
-            if (newQty > item.TonKho) { Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Kho chỉ còn ' + item.TonKho, showConfirmButton: false, timer: 3000}); newQty = item.TonKho; }
+            if (newQty > item.TonKho) {
+                Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Kho chỉ còn ' + item.TonKho + ' cái!', showConfirmButton: false, timer: 3000});
+                newQty = item.TonKho;
+            }
             item.SoLuong = newQty; updatePosUI();
         }
 
-        function changePosQty(i, amt) { var item = posCart[i]; var newQty = item.SoLuong + amt; if(newQty <= 0) { removePosItem(i); return; } if(newQty > item.TonKho) { Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Hết hàng!', showConfirmButton: false, timer: 2000}); return; } item.SoLuong = newQty; updatePosUI(); }
+        function changePosQty(i, amt) {
+            var item = posCart[i]; var newQty = item.SoLuong + amt;
+            if(newQty <= 0) { removePosItem(i); return; }
+            if(newQty > item.TonKho) { Swal.fire({toast:true, position: 'top-end', icon: 'error', title: 'Hết hàng tồn!', showConfirmButton: false, timer: 2000}); return; }
+            item.SoLuong = newQty; updatePosUI();
+        }
+
         function removePosItem(i) { posCart.splice(i, 1); updatePosUI(); }
-        function clearPosCart() { if(posCart.length === 0) return; Swal.fire({title: 'Hủy đơn?', icon: 'warning', showCancelButton: true}).then((res) => { if (res.isConfirmed) { posCart = []; updatePosUI(); } }); }
+        function clearPosCart() {
+            if(posCart.length === 0) return;
+            Swal.fire({title: 'Hủy đơn?', icon: 'warning', showCancelButton: true}).then((res) => { if (res.isConfirmed) { posCart = []; updatePosUI(); } });
+        }
 
+        // ============================================================
+        // THANH TOÁN VÀ IN HÓA ĐƠN
+        // ============================================================
         function openPaymentModal() {
-              if(posCart.length === 0) return;
+            if(posCart.length === 0) return;
+            var total = posCart.reduce((sum, c) => sum + (c.SoLuong * c.GiaBan), 0);
+            document.getElementById('qrTotalAmount').innerText = total.toLocaleString() + ' ₫';
+            generateQR();
+            new bootstrap.Modal(document.getElementById('paymentModal')).show();
+        }
 
-              // Tính tổng tiền hiển thị lên UI
-              var total = posCart.reduce((sum, c) => sum + (c.SoLuong * c.GiaBan), 0);
-              document.getElementById('qrTotalAmount').innerText = total.toLocaleString() + ' ₫';
+        function generateQR() {
+            var bank = document.getElementById('qrBank').value;
+            var acc = document.getElementById('qrAccount').value;
+            var name = document.getElementById('qrName').value;
+            var note = document.getElementById("posNote").value || "Thanh toan mua hang";
+            var totalM = posCart.reduce((sum, c) => sum + (c.SoLuong * c.GiaBan), 0);
 
-              // Gọi hàm sinh QR code (Nó sẽ tự lấy cấu hình ẩn ở trên để vẽ)
-              generateQR();
-
-              // Mở bảng thanh toán
-              new bootstrap.Modal(document.getElementById('paymentModal')).show();
-          }
-
-          // Hàm tự động vẽ QR Code cho nhân viên Sale
-          function generateQR() {
-              var bank = document.getElementById('qrBank').value;
-              var acc = document.getElementById('qrAccount').value;
-              var name = document.getElementById('qrName').value;
-              var note = document.getElementById("posNote").value || "Thanh toan mua hang";
-              var totalM = posCart.reduce((sum, c) => sum + (c.SoLuong * c.GiaBan), 0);
-
-              // Nếu Boss có cài đặt STK thì mới vẽ QR
-              if(bank && acc && totalM > 0) {
-                  var qrUrl = `https://img.vietqr.io/image/${bank}-${acc}-compact2.png?amount=${totalM}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`;
-                  document.getElementById('qrImage').src = qrUrl;
-                  document.getElementById('qrImageContainer').style.display = 'block';
-              } else {
-                  document.getElementById('qrImageContainer').style.display = 'none';
-              }
-          }
+            if(bank && acc && totalM > 0) {
+                var qrUrl = `https://img.vietqr.io/image/${bank}-${acc}-compact2.png?amount=${totalM}&addInfo=${encodeURIComponent(note)}&accountName=${encodeURIComponent(name)}`;
+                document.getElementById('qrImage').src = qrUrl;
+                document.getElementById('qrImageContainer').style.display = 'block';
+            }
+        }
 
         function confirmPaymentAndSave() {
             bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
-            Swal.fire({ title: 'Đang xử lý...', didOpen: () => Swal.showLoading() });
+            Swal.fire({ title: 'Đang lưu hóa đơn...', didOpen: () => Swal.showLoading() });
 
-            // CHÚ Ý CHỖ NÀY LÀ GỌI VÀO API CỦA OWNER (Hoặc API chung của Boss)
             fetch('/Owner/ProcessPosCheckout', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    GhiChu: document.getElementById("posNote").value,
-                    CartItems: posCart.map(c => ({ MaSP: c.MaSP, SoLuong: c.SoLuong, GiaBan: c.GiaBan }))
-                })
-            }).then(res => res.json()).then(data => {
-                if(data.success) { Swal.fire("Thành công!", "Mã HĐ: " + data.maHD, "success").then(() => location.reload()); }
-                else { Swal.fire("Lỗi", data.msg, "error"); }
+                body: JSON.stringify({ GhiChu: document.getElementById("posNote").value, CartItems: posCart.map(c => ({ MaSP: c.MaSP, SoLuong: c.SoLuong, GiaBan: c.GiaBan })) })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    Swal.fire({title: "Thành công!", text: "Bán hàng thành công. Bạn có muốn in hóa đơn không?", icon: "success", showCancelButton: true, confirmButtonText: "In Hóa Đơn", cancelButtonText: "Đóng"}).then((res) => {
+                        if(res.isConfirmed) {
+                            viewInvoiceDetails(data.maHD, posCart.reduce((s,c)=>s+(c.SoLuong*c.GiaBan),0), "Vừa xong", true);
+                        } else {
+                            location.reload();
+                        }
+                    });
+                } else {
+                    Swal.fire("Lỗi", data.msg, "error");
+                }
             });
         }
+
         // ============================================================
-        // NHÂN VIÊN SALE LẮNG NGHE TÍN HIỆU TỪ BOSS (SIGNAL-R)
+          // LỊCH SỬ HÓA ĐƠN (Giao diện chuẩn Doanh nghiệp & Đã đổi đường dẫn sang /Sale)
+          // ============================================================
+          function openInvoiceHistoryModal() {
+              new bootstrap.Modal(document.getElementById('invoiceHistoryModal')).show();
+              document.getElementById('invoiceDetailArea').innerHTML = `<div class="text-center text-muted mt-5"><i class="fas fa-receipt fa-4x mb-3 opacity-25"></i><h5>Chọn một hóa đơn bên trái để xem chi tiết</h5></div>`;
+
+              // Gọi đúng vào SaleController
+              fetch('/Sale/GetInvoicesAPI').then(res => res.json()).then(data => {
+                  var list = document.getElementById('invoiceList'); list.innerHTML = "";
+                  if(data.success && data.data.length > 0) {
+                      data.data.forEach(hd => {
+                          var ma = hd.maHD || hd.MaHD;
+                          var tt = hd.tongTien || hd.TongTien || 0;
+                          var date = hd.ngayTao || hd.NgayTao || "";
+
+                          list.innerHTML += `<button class="list-group-item list-group-item-action p-3" onclick="viewInvoiceDetails('${ma}', ${tt}, '${date}', false)"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="text-info"><i class="fas fa-file-invoice me-2"></i>${ma}</strong><span class="badge bg-danger rounded-pill">${tt.toLocaleString()} ₫</span></div><small class="text-muted"><i class="far fa-clock me-1"></i> ${date}</small></button>`;
+                      });
+                  } else {
+                      list.innerHTML = `<div class="p-4 text-center text-muted">Chưa có hóa đơn nào!</div>`;
+                  }
+              });
+          }
+
+          // Hàm vẽ chi tiết hóa đơn (Bản đẹp nhất)
+        // Hàm vẽ chi tiết hóa đơn (Bản đẹp nhất)
+        function viewInvoiceDetails(maHD, tongTien, ngayTao, autoPrint = false) {
+            var area = document.getElementById('invoiceDetailArea');
+            if(area) area.innerHTML = `<div class="text-center mt-5"><div class="spinner-border text-info"></div><p class="mt-2 text-muted">Đang trích xuất chứng từ...</p></div>`;
+
+            // Gọi đúng vào SaleController
+            fetch('/Sale/GetInvoiceDetailsAPI?maHD=' + maHD).then(res => res.json()).then(data => {
+                if(data.success) {
+                    var html = `
+                        <div class="invoice-wrapper bg-white p-4 p-md-5 border rounded shadow-sm" id="print-invoice-area" style="position: relative; overflow: hidden;">
+                            <div style="position: absolute; top: 30%; left: 50%; transform: translate(-50%, -50%) rotate(-30deg); font-size: 80px; color: rgba(40, 167, 69, 0.05); font-weight: 900; white-space: nowrap; pointer-events: none; z-index: 0;">ĐÃ THANH TOÁN</div>
+
+                            <div class="row border-bottom border-2 pb-3 mb-4" style="position: relative; z-index: 1;">
+                                <div class="col-sm-8">
+                                    <h3 class="fw-bold text-uppercase text-primary mb-1"><i class="fas fa-cubes me-2"></i>${globalStoreInfo.ten || globalStoreInfo.Ten || "SMART WAREHOUSE"}</h3>
+                                    <p class="text-muted mb-0 small">Địa chỉ: ${globalStoreInfo.diaChi || globalStoreInfo.DiaChi || "---"}</p>
+                                    <p class="text-muted mb-0 small">Hotline: ${globalStoreInfo.hotline || globalStoreInfo.Hotline || "---"} | MST: ${globalStoreInfo.mst || globalStoreInfo.MST || "---"}</p>
+                                </div>
+                                <div class="col-sm-4 text-sm-end mt-3 mt-sm-0">
+                                    <h2 class="text-uppercase fw-bold text-secondary mb-0" style="letter-spacing: 2px;">HÓA ĐƠN</h2>
+                                    <p class="mb-0 fw-bold text-dark fs-5">${maHD}</p>
+                                </div>
+                            </div>
+
+                            <div class="row mb-4 text-dark" style="position: relative; z-index: 1;">
+                                <div class="col-sm-6">
+                                    <p class="mb-1 small"><strong>Khách hàng:</strong> Khách mua lẻ</p>
+                                    <p class="mb-0 small"><strong>Phương thức:</strong> Tiền mặt / Chuyển khoản QR</p>
+                                </div>
+                                <div class="col-sm-6 text-sm-end mt-2 mt-sm-0">
+                                    <p class="mb-1 small"><strong>Ngày giao dịch:</strong> ${ngayTao}</p>
+                                    <p class="mb-0 small"><strong>Thu ngân:</strong> Nhân viên bán hàng</p>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive mb-4" style="position: relative; z-index: 1;">
+                                <table class="table table-bordered text-center align-middle mb-0">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th style="width: 5%">STT</th>
+                                            <th class="text-start" style="width: 45%">Mô tả hàng hóa</th>
+                                            <th style="width: 10%">SL</th>
+                                            <th style="width: 20%">Đơn giá</th>
+                                            <th class="text-end pe-3" style="width: 20%">Thành tiền</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+
+                    var stt = 1;
+                    data.data.forEach(c => {
+                        var mSP = c.maSP || c.MaSP;
+                        var tSP = c.tenSP || c.TenSP;
+                        var sl = c.soLuong || c.SoLuong;
+                        var gb = c.giaBan || c.GiaBan || 0;
+                        var tt = c.thanhTien || c.ThanhTien || 0;
+
+                        html += `
+                                        <tr>
+                                            <td class="text-muted">${stt++}</td>
+                                            <td class="text-start">
+                                                <div class="fw-bold text-dark">${tSP}</div>
+                                                <small class="text-muted">Mã: ${mSP}</small>
+                                            </td>
+                                            <td class="fw-bold">${sl}</td>
+                                            <td>${gb.toLocaleString()} ₫</td>
+                                            <td class="text-end fw-bold pe-3">${tt.toLocaleString()} ₫</td>
+                                        </tr>`;
+                    });
+
+                    html += `
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="row justify-content-end" style="position: relative; z-index: 1;">
+                                <div class="col-sm-6 col-md-5">
+                                    <div class="d-flex justify-content-between mb-2 small text-muted"><span>Cộng tiền hàng:</span> <span class="text-dark">${tongTien.toLocaleString()} ₫</span></div>
+                                    <div class="d-flex justify-content-between mb-2 small text-muted"><span>Thuế GTGT (VAT):</span> <span>(Đã bao gồm)</span></div>
+                                    <div class="d-flex justify-content-between mb-3 small text-muted"><span>Chiết khấu:</span> <span>0 ₫</span></div>
+                                    <div class="d-flex justify-content-between align-items-center border-top border-dark pt-2">
+                                        <span class="fw-bold fs-6">TỔNG CỘNG:</span>
+                                        <span class="fw-bold text-danger fs-4">${tongTien.toLocaleString()} ₫</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="text-center mt-5 pt-4 border-top border-dashed" style="border-top-style: dashed; position: relative; z-index: 1;">
+                                <p class="fw-bold mb-1 text-dark">CẢM ƠN QUÝ KHÁCH VÀ HẸN GẶP LẠI!</p>
+                                <p class="small text-muted fst-italic">Hàng hóa đã mua xin vui lòng miễn đổi trả nếu đã bóc tem niêm phong.</p>
+                            </div>
+                        </div>
+
+                        <div class="text-end mt-4">
+                            <button class="btn btn-outline-secondary px-4 fw-bold shadow-sm me-2" data-bs-dismiss="modal">Đóng</button>
+                            <button class="btn btn-primary px-5 fw-bold shadow-sm" onclick="printInvoice()"><i class="fas fa-print me-2"></i> IN HÓA ĐƠN</button>
+                        </div>`;
+
+                    if(area) area.innerHTML = html;
+
+                    if(autoPrint) {
+                        var printDiv = document.createElement('div');
+                        printDiv.innerHTML = html;
+                        document.body.appendChild(printDiv);
+                        printDiv.classList.add('d-none');
+                        document.body.innerHTML = html;
+                        window.print();
+                        location.reload();
+                    }
+                } else {
+                    if(area) area.innerHTML = `<div class="text-danger text-center p-4">Lỗi: ${data.msg}</div>`;
+                }
+            }).catch(() => {
+                if(area) area.innerHTML = `<div class="text-danger text-center p-4">Lỗi kết nối máy chủ!</div>`;
+            });
+        }
+
+          function printInvoice() { window.print(); }
+
         // ============================================================
-
-        var connection = new signalR.HubConnectionBuilder().withUrl("/storeHub").build();
-
-        connection.on("ProductUpdated", function (maSP, tenSP, giaBan, trangThai) {
-            console.log("⚡ Nhận lệnh từ Boss: Cập nhật " + tenSP);
-
-            // Tìm sản phẩm bị đổi giá trong trí nhớ của máy POS
+        // CHI TIẾT SẢN PHẨM & SIGNAL R (NHÂN VIÊN)
+        // ============================================================
+        function xemChiTietSP(maSP) {
             var p = allProducts.find(x => x.MaSP === maSP || x.maSP === maSP);
-
             if (p) {
-                // Cập nhật giá, tên và trạng thái mới mà Boss vừa đổi
-                p.TenSP = tenSP;
-                p.GiaBan = giaBan;
-                p.TrangThai = trangThai;
+                document.getElementById("detail_TenSP").innerText = p.TenSP || p.tenSP;
+                document.getElementById("detail_GiaBan").innerText = (p.GiaBan || p.giaBan).toLocaleString() + " đ";
+                var imgUrl = p.HinhAnh || p.hinhAnh;
+                document.getElementById("detail_HinhAnh").src = (imgUrl && imgUrl.trim() !== "") ? imgUrl : "https://via.placeholder.com/300x300?text=Chua+Co+Anh";
+                var thongSo = p.ThongSoChiTiet || p.thongSoChiTiet;
+                document.getElementById("detail_ThongSo").innerText = (thongSo && thongSo.trim() !== "") ? thongSo : "Chưa cập nhật thông số chi tiết.";
+                new bootstrap.Modal(document.getElementById('modalChiTietSP')).show();
+            }
+        }
 
-                // Gọi hàm quét lại màn hình để in giá mới ra ngay lập tức
-                renderPosProducts();
+        // BỘ ĐÀM SIGNAL R - LẮNG NGHE CHỦ SHOP ĐỔI GIÁ/TRẠNG THÁI LÀ CẬP NHẬT NGAY LẬP TỨC
+        var connection = new signalR.HubConnectionBuilder().withUrl("/storeHub").build();
+        connection.on("ProductUpdated", function (maSP, tenSP, giaBan, trangThai) {
 
-                // Nảy thông báo cho nhân viên Sale biết để báo khách
-                Swal.fire({
-                    toast: true, position: 'top-end', icon: 'warning',
-                    title: '⚡ Giá sản phẩm [' + tenSP + '] vừa được cập nhật!',
-                    showConfirmButton: false, timer: 4000
-                });
+            // 1. Cập nhật Bảng tra cứu bên tab Tra cứu
+            var priceElement = document.getElementById("price_text_" + maSP);
+            if (priceElement) priceElement.innerText = giaBan.toLocaleString() + " đ";
+
+            var nameElement = document.getElementById("name_text_" + maSP);
+            if (nameElement) nameElement.innerText = tenSP;
+
+            var statusElement = document.getElementById("status_text_" + maSP);
+            if(statusElement) {
+                if(trangThai) {
+                    statusElement.innerHTML = `<i class="fas fa-check-circle me-1"></i>Đang bán`;
+                    statusElement.className = "badge bg-success";
+                } else {
+                    statusElement.innerHTML = `<i class="fas fa-lock me-1"></i>Ngừng bán`;
+                    statusElement.className = "badge bg-danger";
+                }
+            }
+
+            // 2. Cập nhật POS
+            var p = allProducts.find(x => x.MaSP === maSP || x.maSP === maSP);
+            if (p) {
+                p.TenSP = tenSP; p.GiaBan = giaBan; p.TrangThai = trangThai;
+                renderPosProducts(); // Vẽ lại máy POS
+
+                // Nếu hàng đang trong giỏ chờ thanh toán mà chủ shop báo ngưng bán -> Báo động
+                var inCart = posCart.find(x => x.MaSP === maSP);
+                if(inCart && !trangThai) {
+                    Swal.fire("Cảnh báo!", `Sản phẩm ${tenSP} trong giỏ hàng vừa bị Quản lý tạm ngưng kinh doanh!`, "warning");
+                } else if(inCart) {
+                    inCart.GiaBan = giaBan; // Cập nhật luôn giá mới vào giỏ hàng khách đang mua
+                    updatePosUI();
+                }
+
+                Swal.fire({toast: true, position: 'top-end', icon: 'info', title: 'Giá ' + tenSP + ' vừa được cập nhật!', showConfirmButton: false, timer: 3000});
             }
         });
+        connection.start().catch(err => console.error("SignalR Lỗi: " + err));
 
-        // Bật công tắc kết nối
-        connection.start().then(function () {
-            console.log("🟢 Máy POS đã kết nối Real-time với hệ thống!");
-        }).catch(function (err) {
-            console.error("🔴 Lỗi mất sóng: " + err.toString());
-        });
     </script>
 </body>
 </html>

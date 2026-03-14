@@ -1,0 +1,923 @@
+﻿@model Business.DTOs.Output.OwnerDashboardViewModel
+@{
+    Layout = null;
+    ViewData["Title"] = "Hệ Thống Quản Trị Kho Bãi";
+    var currentUserId = Context.Session.GetString("MaND");
+    var theme = ViewBag.ThemeConfig as Core.Entities.CauHinhHeThong;
+    var tenCuaHang = theme?.TenCuaHang ?? "SMART WAREHOUSE";
+    var mauChuDao = theme?.MauChuDao ?? "#2c3e50";
+    var mauNhan = theme?.MauNhan ?? "#3498db";
+    var mauNen = theme?.MauNen ?? "#f4f6f9";
+
+    // Serialize dữ liệu để xài dưới JS
+    var productsJson = Model.DSSanPham != null
+        ? System.Text.Json.JsonSerializer.Serialize(Model.DSSanPham.Select(x => new
+        {
+            MaSP = x.MaSP != null ? x.MaSP.Trim() : "",
+            x.TenSP,
+            x.MaVach,
+            x.GiaNhap,
+            GiaBan = x.GiaBan ?? 0,
+            x.DonViTinh,
+            SoLuongTon = x.SoLuongTon ?? 0,
+            TrangThai = x.TrangThai ?? false,
+            HinhAnh = x.HinhAnh ?? "",
+            ThongSoChiTiet = x.ThongSoChiTiet ?? "",
+            ThoiGianBaoHanh = x.ThoiGianBaoHanh ?? 0
+        })) : "[]";
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thủ Kho | @tenCuaHang</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: @mauChuDao;
+            --accent-color: @mauNhan;
+            --bg-light: @mauNen;
+        }
+
+        .card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-info):not(.bg-warning),
+        .stat-card:not(.bg-primary):not(.bg-success):not(.bg-danger):not(.bg-info):not(.bg-warning),
+        .modal-content, .sidebar {
+            background-color: var(--bg-light) !important;
+        }
+
+        .bg-white {
+            background-color: var(--bg-light) !important;
+        }
+
+        .table {
+            --bs-table-bg: transparent !important;
+        }
+
+        .table-custom th, .table-light th {
+            background-color: rgba(0,0,0,0.03) !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-custom td, .table td {
+            background-color: transparent !important;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .table-hover > tbody > tr:hover > * {
+            background-color: rgba(0,0,0,0.05) !important;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-light);
+            overflow: hidden;
+        }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 260px;
+            background: var(--bg-light);
+            height: 100vh;
+            position: fixed;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 25px 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+            .sidebar-header h5 {
+                font-weight: 800;
+                color: var(--primary-color);
+                margin: 0;
+                letter-spacing: -0.5px;
+            }
+
+        .sidebar-menu-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 15px 0;
+        }
+
+        .sidebar-footer {
+            border-top: 1px solid rgba(0,0,0,0.05);
+            padding: 20px;
+            flex-shrink: 0;
+        }
+
+        /* MAIN CONTENT */
+        .main-content {
+            margin-left: 260px;
+            height: 100vh;
+            overflow-y: auto;
+            padding: 30px;
+        }
+
+        /* NAV LINKS */
+        .nav-link {
+            color: #555;
+            padding: 12px 20px;
+            margin: 4px 10px;
+            border-radius: 8px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+            .nav-link i {
+                width: 30px;
+                font-size: 1.1rem;
+                color: #95a5a6;
+            }
+
+            .nav-link:hover {
+                background-color: rgba(0,0,0,0.03);
+                color: var(--primary-color);
+            }
+
+            .nav-link.active {
+                background-color: var(--primary-color);
+                color: white;
+                box-shadow: 0 4px 6px rgba(44, 62, 80, 0.2);
+            }
+
+                .nav-link.active i {
+                    color: #ecf0f1;
+                }
+
+        .stat-card {
+            border-radius: 12px;
+            padding: 25px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.03);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+
+        #searchResults {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-boxes me-2"></i>@tenCuaHang</h5>
+            <small class="text-warning fw-bold"><i class="fas fa-user-shield me-1"></i>Trạm Quản Lý Kho</small>
+        </div>
+
+        <div class="sidebar-menu-area">
+            <div class="nav flex-column nav-pills" id="v-pills-tab" role="tablist">
+                <small class="text-uppercase fw-bold text-muted px-4 mb-2 mt-2" style="font-size: 0.75rem;">Nghiệp vụ Kho</small>
+                <a class="nav-link active" data-bs-toggle="pill" href="#tab-import"><i class="fas fa-truck-loading"></i> Nhập hàng & Mã vạch</a>
+                <a class="nav-link" data-bs-toggle="pill" href="#tab-warehouse"><i class="fas fa-warehouse"></i> Tồn kho & Kiểm kê</a>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="d-flex align-items-center mb-3">
+                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 40px; height: 40px;"><i class="fas fa-hard-hat"></i></div>
+                <div><div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div><small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Đang trực kho</small></div>
+            </div>
+            <a href="/Home/Logout" class="btn btn-outline-danger w-100 btn-sm"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="tab-content" id="v-pills-tabContent">
+
+            <div class="tab-pane fade show active" id="tab-import">
+                <div class="section-header">
+                    <div class="section-title text-primary"><i class="fas fa-truck-loading me-2"></i>Tạo Phiếu Nhập Kho</div>
+                    <button class="btn btn-outline-secondary shadow-sm" onclick="openImportHistoryModal()"><i class="fas fa-history me-2"></i>Lịch sử nhập kho</button>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-md-8">
+                        <div class="card stat-card h-100 border-0 shadow-sm">
+                            <div class="card-header bg-white border-bottom-0 pt-0 px-0">
+                                <div class="row g-2">
+                                    <div class="col-md-5">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-barcode text-muted"></i></span>
+                                            <input type="text" class="form-control border-start-0 bg-light border-end-0" placeholder="Quét mã vạch (Enter)..." id="scanBarcode" autofocus>
+                                            <button class="btn btn-light border border-start-0 text-primary fw-bold" type="button" onclick="openScannerModal()" title="Quét bằng Camera"><i class="fas fa-camera"></i></button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-7 position-relative">
+                                        <div class="input-group">
+                                            <span class="input-group-text bg-light border-end-0"><i class="fas fa-search text-muted"></i></span>
+                                            <input type="text" class="form-control border-start-0 bg-light" placeholder="Tìm tên sản phẩm..." id="searchProduct">
+                                            <button class="btn btn-primary fw-bold" type="button" onclick="openProductModal()"><i class="fas fa-plus me-1"></i> SP Mới</button>
+                                        </div>
+                                        <div id="searchResults" class="list-group position-absolute w-100 shadow mt-1 rounded-3" style="z-index: 1050; display:none;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive mt-3 flex-grow-1" style="max-height: 500px; overflow-y: auto;">
+                                <table class="table table-custom table-hover align-middle">
+                                    <thead class="bg-light sticky-top">
+                                        <tr><th style="width: 5%">#</th><th style="width: 35%">Sản phẩm</th><th style="width: 10%">ĐVT</th><th style="width: 15%">Số lượng</th><th style="width: 20%">Đơn giá nhập</th><th style="width: 15%">Thành tiền</th><th style="width: 5%"></th></tr>
+                                    </thead>
+                                    <tbody id="cartBody"></tbody>
+                                </table>
+                            </div>
+                            <div id="emptyState" class="text-center py-5">
+                                <i class="fas fa-box-open fa-3x text-muted mb-3 opacity-25"></i><p class="text-muted">Chưa có sản phẩm nào trong phiếu nhập.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4">
+                        <div class="card stat-card bg-light border-0 shadow-sm">
+                            <h6 class="fw-bold mb-3 text-primary"><i class="fas fa-info-circle me-2"></i>Thông tin phiếu nhập</h6>
+                            <form id="frmPhieuNhap">
+                                <div class="mb-3">
+                                    <label class="small fw-bold text-muted mb-1">Nhà cung cấp: <span class="text-danger">*</span></label>
+                                    <select class="form-select bg-white" id="MaNCC">
+                                        <option value="">-- Chọn NCC --</option>
+                                        @if (Model.DSNhaCungCap != null)
+                                        {
+                                            foreach (var ncc in Model.DSNhaCungCap)
+                                            {
+                                                <option value="@ncc.MaNCC">@ncc.TenNCC</option>
+                                            }
+                                        }
+                                    </select>
+                                </div>
+                                <div class="mb-3"><label class="small fw-bold text-muted mb-1">Thủ kho trực:</label><input type="text" class="form-control bg-white" value="@Context.Session.GetString("HoTen")" readonly></div>
+                                <div class="mb-3"><label class="small fw-bold text-muted mb-1">Ngày nhập:</label><input type="datetime-local" class="form-control bg-white" id="NgayNhap" value="@DateTime.Now.ToString("yyyy-MM-ddTHH:mm")"></div>
+                                <div class="mb-3"><label class="small fw-bold text-muted mb-1">Ghi chú (Biển số xe, người giao...):</label><textarea class="form-control bg-white" id="GhiChu" rows="2" placeholder="Ghi chú nhận hàng..."></textarea></div>
+                                <hr class="border-secondary opacity-25">
+                                <div class="d-flex justify-content-between mb-2"><span>Tổng số lượng:</span><span class="fw-bold" id="lblTotalQty">0</span></div>
+                                <div class="d-flex justify-content-between align-items-center mb-4"><span class="h6 mb-0 fw-bold">Tổng tiền hàng:</span><span class="h4 mb-0 fw-bold text-danger" id="lblTotalMoney">0 ₫</span></div>
+                                <button type="button" class="btn btn-primary w-100 py-3 fw-bold mb-2 shadow-sm" onclick="submitPhieuNhap()"><i class="fas fa-save me-2"></i> HOÀN TẤT NHẬP KHO</button>
+                                <button type="button" class="btn btn-outline-secondary w-100 py-2" onclick="location.reload()">Hủy phiếu</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tab-pane fade" id="tab-warehouse">
+                <div class="section-header">
+                    <div class="section-title text-warning"><i class="fas fa-warehouse me-2"></i>Tồn Kho & Kiểm Kê</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="card stat-card bg-success text-white border-0 shadow">
+                            <h6 class="opacity-75"><i class="fas fa-boxes me-2"></i>Tổng số lượng hàng hóa</h6>
+                            <h3 class="fw-bold mb-0">@(Model.DSSanPham.Sum(x => x.SoLuongTon ?? 0)) Món</h3>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card stat-card bg-danger text-white border-0 shadow">
+                            <h6 class="opacity-75"><i class="fas fa-exclamation-triangle me-2"></i>Sắp hết / Hết hàng</h6>
+                            <h3 class="fw-bold mb-0">@(Model.DSSanPham.Count(x => (x.SoLuongTon ?? 0) <= 10)) Món</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card stat-card border-0 p-0 shadow-sm">
+                    <div class="card-body table-responsive p-0" style="max-height: 60vh; overflow-y: auto;">
+                        <table class="table table-hover table-custom align-middle text-center mb-0">
+                            <thead class="table-light sticky-top">
+                                <tr><th>Mã SP</th><th class="text-start">Tên Sản Phẩm</th><th>Mã Vạch</th><th class="bg-warning bg-opacity-25">Tồn Máy Tính</th><th>Trạng Thái Kho</th><th>Thao tác</th></tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.DSSanPham != null && Model.DSSanPham.Any())
+                                {
+                                    foreach (var item in Model.DSSanPham)
+                                    {
+                                        int tonKho = item.SoLuongTon ?? 0;
+                                        string maSP = item.MaSP != null ? item.MaSP.Trim() : "";
+                                        <tr>
+                                            <td class="fw-bold text-secondary">@maSP</td>
+                                            <td class="text-start fw-bold text-primary">@item.TenSP</td>
+                                            <td>@(string.IsNullOrEmpty(item.MaVach) ? "---" : item.MaVach)</td>
+                                            <td class="fs-5 fw-bold bg-warning bg-opacity-10 text-dark">@tonKho</td>
+                                            <td>
+                                                @if (tonKho > 10)
+                                                {
+                                                    <span class="badge bg-success">An toàn</span>
+                                                }
+                                                else if (tonKho > 0)
+                                                {
+
+                                                    <span class="badge bg-warning text-dark">Sắp hết</span>
+                                                }
+                                                else
+                                                {
+
+                                                    <span class="badge bg-danger">Hết hàng</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <button class="btn btn-sm btn-warning fw-bold text-dark shadow-sm" onclick="openKiemKeModal('@maSP', '@item.TenSP', @tonKho)">
+                                                    <i class="fas fa-balance-scale me-1"></i> Cân Bằng Kho
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="modal fade" id="scannerModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-camera me-2"></i>Máy Quét Mã Vạch</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center p-0"><div id="reader" style="width: 100%; min-height: 300px; background: #000;"></div></div>
+                <div class="modal-footer justify-content-center bg-light border-0"><small class="text-muted">Đưa mã vạch hoặc mã QR vào giữa khung hình.</small></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalAddProduct" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-box-open me-2"></i>Khai báo Hàng Hóa Mới</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="row g-3">
+                        <div class="col-md-12">
+                            <div class="p-3 border rounded bg-light">
+                                <label class="small fw-bold text-primary d-block mb-2">Hình chụp kiện hàng</label>
+                                <input type="file" id="new_FileAnh" class="form-control" accept="image/*">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">Nhóm hàng (Sơn, Thép...) <span class="text-danger">*</span></label>
+                            <input type="text" id="new_NhomHang" class="form-control bg-light" onchange="autoGenerateSKU()">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">Nhà cung cấp <span class="text-danger">*</span></label>
+                            <select class="form-select bg-light" id="new_MaNCC_SP" onchange="autoGenerateSKU()">
+                                <option value="">-- Chọn NCC --</option>
+                                @if (Model.DSNhaCungCap != null)
+                                {
+                                    foreach (var ncc in Model.DSNhaCungCap)
+                                    {
+                                        <option value="@ncc.TenNCC">@ncc.TenNCC</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <label class="small fw-bold text-muted">Tên Hàng Hóa <span class="text-danger">*</span></label>
+                            <input type="text" id="new_TenSP" class="form-control border-primary" placeholder="VD: Búa đinh cán thép 500g">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-primary">Mã Nội Bộ</label>
+                            <input type="text" id="new_MaSP" class="form-control bg-warning bg-opacity-25 text-danger fw-bold" readonly placeholder="Hệ thống tự cấp">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted">Mã Vạch Quét</label>
+                            <input type="text" id="new_MaVach" class="form-control">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="small fw-bold text-muted">Đơn vị</label>
+                            <input type="text" id="new_DVT" class="form-control" placeholder="Cái, Thùng...">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-muted">Số lô (nếu có)</label>
+                            <input type="text" id="new_SoLo" class="form-control" placeholder="L-1234">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="small fw-bold text-success">Giá nhập (Báo cáo Kế toán) <span class="text-danger">*</span></label>
+                            <input type="number" id="new_GiaNhap" class="form-control border-success text-success fw-bold" value="0" min="0">
+                        </div>
+                        <div class="col-md-8 mt-3">
+                            <label class="small fw-bold text-muted">Thông số chi tiết</label>
+                            <textarea id="new_ThongSo" class="form-control border-info" rows="2" placeholder="Màu sắc, kích thước, chất liệu..."></textarea>
+                        </div>
+                        <div class="col-md-4 mt-3">
+                            <label class="small fw-bold text-muted">Bảo hành (Tháng)</label>
+                            <input type="number" id="new_BaoHanh" class="form-control border-info" placeholder="0" min="0" value="0">
+                        </div>
+                        <input type="hidden" id="new_GiaBan" value="0">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold" onclick="saveNewProductERP()"><i class="fas fa-save me-2"></i>Lưu Sản Phẩm</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="kiemKeModal" tabindex="-1" data-bs-backdrop="static">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-dark text-white p-4">
+                    <div>
+                        <h5 class="modal-title fw-bold mb-1"><i class="fas fa-clipboard-check me-2 text-warning"></i>PHIẾU KIỂM KÊ KHO</h5>
+                        <small class="text-light opacity-75" id="kk_MaSP_Text">Mã SP: Đang tải...</small>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 bg-light">
+                    <input type="hidden" id="kk_MaSP" />
+                    <div class="p-4 bg-white border-bottom"><h4 class="fw-bold text-primary mb-0" id="kk_TenSP">Tên Sản Phẩm</h4></div>
+                    <div class="row g-0">
+                        <div class="col-md-7 p-4 border-end bg-white">
+                            <div class="row g-3 mb-4">
+                                <div class="col-6">
+                                    <div class="p-3 border rounded bg-light text-center h-100">
+                                        <small class="text-muted fw-bold d-block mb-2">TỒN MÁY TÍNH</small>
+                                        <h2 class="fw-bold text-secondary mb-0" id="kk_TonHeThong">0</h2>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="p-3 border border-warning border-2 rounded bg-warning bg-opacity-10 text-center h-100 shadow-sm">
+                                        <small class="text-dark fw-bold d-block mb-2">ĐẾM THỰC TẾ</small>
+                                        <input type="number" id="kk_TonThucTe" class="form-control form-control-lg fw-bold text-center text-danger fs-3 bg-transparent border-0 border-bottom border-warning rounded-0 p-0" required min="0" oninput="calcChenhLech()" onclick="this.select()">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded text-center" id="kk_AlertBox" style="background-color: #f8f9fa;">
+                                <span class="text-muted fw-bold">Nhập số đếm được để kiểm tra...</span>
+                            </div>
+                        </div>
+                        <div class="col-md-5 p-4">
+                            <h6 class="fw-bold text-secondary mb-3"><i class="fas fa-tags me-2"></i>Lý do chênh lệch</h6>
+                            <div class="mb-3">
+                                <select class="form-select border-secondary" id="kk_PhanLoaiLyDo" disabled>
+                                    <option value="Khớp số lượng">-- Hệ thống tự khớp --</option>
+                                    <option value="Hao hụt tự nhiên">Hao hụt / Hư hỏng</option>
+                                    <option value="Mất cắp / Thất thoát">Mất cắp / Thất thoát</option>
+                                    <option value="Sai sót sổ sách">Nhập sai sổ sách</option>
+                                    <option value="Lý do khác">Lý do khác...</option>
+                                </select>
+                            </div>
+                            <div class="mb-0">
+                                <textarea id="kk_LyDo" class="form-control border-secondary" rows="3" placeholder="Ghi chú chi tiết báo cáo lên Quản lý..." disabled></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0 p-3 bg-white border-top">
+                    <button type="button" class="btn btn-outline-secondary px-4 fw-bold" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-dark px-5 fw-bold shadow-sm" id="btnSubmitKiemKe" onclick="submitKiemKe()"><i class="fas fa-check-circle me-2"></i>CẬP NHẬT KHO</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="importHistoryModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-truck-loading me-2"></i>Lịch sử Nhập hàng</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="row g-0 h-100">
+                        <div class="col-md-4 border-end bg-light" style="max-height: 70vh; overflow-y: auto;">
+                            <div class="list-group list-group-flush rounded-0" id="importList"></div>
+                        </div>
+                        <div class="col-md-8" style="max-height: 70vh; overflow-y: auto; background: #fff;">
+                            <div class="p-4" id="importDetailArea"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+
+    <script>
+        var allProducts = @Html.Raw(productsJson);
+        var importCart = [];
+        var globalStoreInfo = { Ten: "@tenCuaHang", DiaChi: "---", Hotline: "---", MST: "---" };
+
+        document.addEventListener("DOMContentLoaded", function () {
+            fetch('/Sale/GetStoreInfoAPI').then(res => res.json()).then(res => {
+                if(res.success && res.data) globalStoreInfo = res.data;
+            });
+        });
+
+        // ============================================================
+        // 1. MÁY QUÉT CAMERA (SỰ KIỆN BỌC THÉP)
+        // ============================================================
+        var html5QrcodeScanner = null;
+        var scannerModalEl = document.getElementById('scannerModal');
+
+        function openScannerModal() {
+            bootstrap.Modal.getOrCreateInstance(scannerModalEl).show();
+        }
+
+        scannerModalEl.addEventListener('shown.bs.modal', function () {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                Swal.fire("Lỗi Bảo Mật", "Trình duyệt đang chặn Camera. Cần chạy localhost hoặc HTTPS.", "error");
+                return;
+            }
+            if (!html5QrcodeScanner) { html5QrcodeScanner = new Html5Qrcode("reader"); }
+
+            const config = { fps: 10, qrbox: { width: 250, height: 120 }, disableFlip: false, formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13, Html5QrcodeSupportedFormats.CODE_128, Html5QrcodeSupportedFormats.QR_CODE ] };
+
+            // Ưu tiên Webcam Laptop để test đồ án
+            html5QrcodeScanner.start({ facingMode: "user" }, config, onScanSuccess)
+            .catch(err => {
+                console.error(err);
+                Swal.fire("Lỗi Camera", "Vui lòng cho phép truy cập Camera trên thanh địa chỉ 🔒.", "error");
+                bootstrap.Modal.getInstance(scannerModalEl).hide();
+            });
+        });
+
+        scannerModalEl.addEventListener('hidden.bs.modal', function () {
+            stopScanner();
+        });
+
+        function onScanSuccess(decodedText, decodedResult) {
+            stopScanner();
+            bootstrap.Modal.getInstance(scannerModalEl).hide();
+
+            var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+            audio.play().catch(e => {});
+
+            var scanInput = document.getElementById("scanBarcode");
+            if(scanInput) scanInput.value = decodedText;
+
+            var p = allProducts.find(x => x.MaVach === decodedText || x.MaSP === decodedText);
+            if(p) {
+                addToCart(p);
+                if(scanInput) scanInput.value = "";
+                Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã thêm: ' + p.TenSP, showConfirmButton: false, timer: 1500 });
+            } else {
+                Swal.fire({
+                    title: 'Mã chưa tồn tại!', text: `Hệ thống chưa ghi nhận mã [${decodedText}]. Tạo mới?`, icon: 'question',
+                    showCancelButton: true, confirmButtonText: 'Đồng ý Tạo', cancelButtonText: 'Bỏ qua'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        openProductModal();
+                        document.getElementById("new_MaVach").value = decodedText;
+                        if(scanInput) scanInput.value = "";
+                    }
+                });
+            }
+        }
+
+        function stopScanner() {
+            if (html5QrcodeScanner && html5QrcodeScanner.isScanning) {
+                html5QrcodeScanner.stop().then(() => { html5QrcodeScanner.clear(); }).catch(err => {});
+            }
+        }
+
+        // ============================================================
+        // 2. TÌM KIẾM SẢN PHẨM & GIỎ HÀNG (CẬP NHẬT REALTIME)
+        // ============================================================
+        var searchInput = document.getElementById("searchProduct");
+        var searchRes = document.getElementById("searchResults");
+        if(searchInput && searchRes){
+            function performSearch() {
+                var k = searchInput.value.toLowerCase();
+                searchRes.innerHTML = "";
+
+                // Mảng gốc không bị đảo ngược để SP mới nằm trên cùng
+                var sourceData = [...allProducts];
+
+                var matches = k.length < 1 ? sourceData : sourceData.filter(p => {
+                    var ten = (p.TenSP || p.tenSP || "").toLowerCase();
+                    var ma = (p.MaSP || p.maSP || "").toLowerCase();
+                    return ten.includes(k) || ma.includes(k);
+                });
+
+                if(matches.length > 0) {
+                    searchRes.style.display = "block";
+                    matches.slice(0, 6).forEach(p => {
+                        var ten = p.TenSP || p.tenSP || "Không tên";
+                        var ma = p.MaSP || p.maSP || "---";
+                        var ton = p.SoLuongTon || p.soLuongTon || 0;
+
+                        var item = document.createElement("a");
+                        item.className = "list-group-item list-group-item-action cursor-pointer bg-white border-bottom";
+                        item.innerHTML = `
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div><div class="fw-bold text-primary">${ten}</div><small class="text-muted"><i class="fas fa-barcode me-1"></i>${ma}</small></div>
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success fs-6 shadow-sm"><i class="fas fa-box me-1"></i>Tồn: ${ton}</span>
+                            </div>`;
+
+                        item.onclick = function() {
+                            addToCart(p);
+                            searchInput.value = "";
+                            searchRes.style.display = "none";
+                            return false;
+                        };
+                        searchRes.appendChild(item);
+                    });
+                } else { searchRes.style.display = "none"; }
+            }
+            searchInput.addEventListener("input", performSearch);
+            searchInput.addEventListener("focus", performSearch);
+            document.addEventListener("click", function(e) { if (e.target !== searchInput && e.target.parentNode !== searchRes) { searchRes.style.display = "none"; } });
+        }
+
+        // Bắt sự kiện phím Enter ở ô Quét mã vạch (bằng súng)
+        var inputBarcode = document.getElementById("scanBarcode");
+        if(inputBarcode){
+            inputBarcode.addEventListener("keyup", function(e) {
+                if (e.key === "Enter") {
+                    var code = this.value.trim();
+                    var p = allProducts.find(x => x.MaVach === code || x.MaSP === code);
+                    if(p) { addToCart(p); this.value = ""; }
+                    else {
+                        Swal.fire({
+                            title: 'Mã lạ!', text: `Mã [${code}] chưa có trong DB. Khai báo ngay?`, icon: 'question',
+                            showCancelButton: true, confirmButtonText: 'Khai báo', cancelButtonText: 'Bỏ qua'
+                        }).then((result) => {
+                            if (result.isConfirmed) { openProductModal(); document.getElementById("new_MaVach").value = code; this.value = ""; }
+                        });
+                    }
+                }
+            });
+        }
+
+        function addToCart(p) {
+            var ma = p.MaSP || p.maSP;
+            var item = importCart.find(c => c.MaSP === ma);
+            if(item) { item.SoLuong++; }
+            else { importCart.push({ MaSP: ma, TenSP: p.TenSP || p.tenSP, DVT: p.DonViTinh || p.donViTinh || "Cái", SoLuong: 1, DonGia: p.GiaNhap || p.giaNhap || 0 }); }
+            renderCart();
+            var audio = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'); audio.volume = 0.3; audio.play().catch(e => {});
+        }
+
+        function renderCart() {
+            var tbody = document.getElementById("cartBody");
+            var emptyState = document.getElementById("emptyState");
+            tbody.innerHTML = "";
+            var totalQ = 0; var totalM = 0;
+
+            if(importCart.length === 0) { emptyState.style.display = "block"; }
+            else {
+                emptyState.style.display = "none";
+                importCart.forEach((c, i) => {
+                    var tt = c.SoLuong * c.DonGia;
+                    totalQ += parseInt(c.SoLuong); totalM += tt;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td class="text-muted">${i+1}</td>
+                            <td class="text-start"><div class="fw-bold text-primary">${c.TenSP}</div><small class="text-muted">${c.MaSP}</small></td>
+                            <td><span class="badge bg-light text-dark border">${c.DVT}</span></td>
+                            <td><input type="number" class="form-control form-control-sm text-center fw-bold bg-white" value="${c.SoLuong}" min="1" onchange="updateCart(${i}, 'q', this.value)" onclick="this.select()"></td>
+                            <td><input type="number" class="form-control form-control-sm text-end fw-bold bg-white text-success" value="${c.DonGia}" min="0" onchange="updateCart(${i}, 'p', this.value)" onclick="this.select()"></td>
+                            <td class="text-end fw-bold text-danger">${tt.toLocaleString('vi-VN')} ₫</td>
+                            <td class="text-center"><button class="btn btn-sm text-danger" onclick="removeCart(${i})"><i class="fas fa-times"></i></button></td>
+                        </tr>`;
+                });
+            }
+            document.getElementById("lblTotalQty").innerText = totalQ;
+            document.getElementById("lblTotalMoney").innerText = totalM.toLocaleString('vi-VN') + " ₫";
+        }
+
+        window.updateCart = function(i, type, val) {
+            if(type === 'q') importCart[i].SoLuong = parseInt(val) || 1;
+            if(type === 'p') importCart[i].DonGia = parseFloat(val) || 0;
+            renderCart();
+        };
+        window.removeCart = function(i) { importCart.splice(i, 1); renderCart(); };
+
+        // ============================================================
+        // 3. THÊM SP MỚI (KHÔNG RELOAD TRANG, RỚT VÀO GIỎ)
+        // ============================================================
+        function openProductModal() {
+            document.getElementById('new_NhomHang').value=''; document.getElementById('new_MaNCC_SP').value=''; document.getElementById('new_TenSP').value=''; document.getElementById('new_MaSP').value=''; document.getElementById('new_MaVach').value=''; document.getElementById('new_SoLo').value='';
+            new bootstrap.Modal(document.getElementById('modalAddProduct')).show();
+        }
+
+        function autoGenerateSKU() {
+            var nhom = document.getElementById("new_NhomHang").value;
+            var ncc = document.getElementById("new_MaNCC_SP").value;
+            if(nhom && ncc) {
+                fetch(`/Owner/GenerateSKU?tenNhom=${encodeURIComponent(nhom)}&tenNCC=${encodeURIComponent(ncc)}`)
+                .then(res => res.json())
+                .then(data => { if(data.success) { document.getElementById("new_MaSP").value = data.maSP; } });
+            }
+        }
+
+        function saveNewProductERP() {
+            var ma = document.getElementById('new_MaSP').value;
+            var ten = document.getElementById('new_TenSP').value;
+
+            if(!ma || !ten) { Swal.fire("Thiếu thông tin", "Nhập Nhóm hàng và Tên để sinh mã!", "warning"); return; }
+
+            var formData = new FormData();
+            formData.append("MaSP", ma);
+            formData.append("TenSP", ten);
+            formData.append("MaVach", document.getElementById('new_MaVach').value);
+            formData.append("DonViTinh", document.getElementById('new_DVT').value);
+            formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
+            formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value);
+            formData.append("GiaBan", document.getElementById('new_GiaBan').value);
+            formData.append("TrangThai", true);
+            formData.append("ThongSoChiTiet", document.getElementById('new_ThongSo').value);
+            formData.append("ThoiGianBaoHanh", document.getElementById('new_BaoHanh').value);
+
+            var fileInput = document.getElementById('new_FileAnh');
+            if (fileInput && fileInput.files.length > 0) formData.append("fileAnh", fileInput.files[0]);
+
+            Swal.fire({ title: 'Đang đẩy vào kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            fetch('/Owner/CreateProductWithImageAPI', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if(res.success) {
+                    Swal.close();
+
+                    // Nhét vào RAM
+                    var newProd = { MaSP: ma, TenSP: ten, MaVach: document.getElementById('new_MaVach').value, DonViTinh: document.getElementById('new_DVT').value || "Cái", GiaNhap: parseFloat(document.getElementById('new_GiaNhap').value) || 0, GiaBan: 0, SoLuongTon: 0, TrangThai: true };
+                    allProducts.unshift(newProd);
+
+                    // Rớt vào giỏ hàng
+                    addToCart(newProd);
+
+                    // Xóa trắng form
+                    document.getElementById('new_MaSP').value = ''; document.getElementById('new_TenSP').value = ''; document.getElementById('new_MaVach').value = ''; document.getElementById('new_SoLo').value = ''; document.getElementById('new_ThongSo').value = ''; document.getElementById('new_BaoHanh').value = '0'; document.getElementById('new_GiaNhap').value = '0';
+
+                    // Ẩn modal an toàn
+                    try { bootstrap.Modal.getOrCreateInstance(document.getElementById('modalAddProduct')).hide(); } catch(e) {}
+
+                    Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Đã lưu! Hãy nhập số lượng.', showConfirmButton: false, timer: 3000 });
+                } else { Swal.fire("Lỗi Database", res.msg, "error"); }
+            }).catch(err => { Swal.fire("Lỗi Mạng", "Mất kết nối máy chủ!", "error"); });
+        }
+
+        // ============================================================
+        // 4. HOÀN TẤT NHẬP KHO & CỘNG TỒN VÀO RAM NGAY LẬP TỨC
+        // ============================================================
+        function submitPhieuNhap() {
+            var ncc = document.getElementById("MaNCC").value;
+            if(!ncc) { Swal.fire("Lỗi", "Vui lòng chọn Nhà Cung Cấp!", "error"); return; }
+            if(importCart.length === 0) { Swal.fire("Lỗi", "Giỏ hàng trống!", "error"); return; }
+
+            Swal.fire({title: 'Đang chốt sổ kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+
+            fetch('/Owner/SavePhieuNhap', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ MaNCC: ncc, NgayNhap: document.getElementById("NgayNhap").value, GhiChu: document.getElementById("GhiChu").value, ChiTiet: importCart })
+            }).then(res => res.json()).then(data => {
+                if(data.success) {
+                    // CỘNG TỒN KHO VÀO RAM ĐỂ TÌM KIẾM THẤY NGAY MÀ KHÔNG CẦN F5
+                    importCart.forEach(item => {
+                        var p = allProducts.find(x => x.MaSP === item.MaSP || x.maSP === item.MaSP);
+                        if (p) p.SoLuongTon = (p.SoLuongTon || 0) + parseInt(item.SoLuong);
+                    });
+
+                    importCart = []; renderCart();
+                    document.getElementById("GhiChu").value = ""; document.getElementById("MaNCC").value = "";
+
+                    Swal.fire({icon: "success", title: "Nhập Kho Thành Công", timer: 1500, showConfirmButton: false})
+                    .then(() => { openImportHistoryModal(); });
+                }
+                else { Swal.fire("Lỗi", data.msg, "error"); }
+            }).catch(() => Swal.fire("Lỗi", "Mất kết nối máy chủ", "error"));
+        }
+
+        // ============================================================
+        // 5. KIỂM KÊ KHO
+        // ============================================================
+        function openKiemKeModal(maSP, tenSP, tonHeThong) {
+            document.getElementById('kk_MaSP').value = maSP; document.getElementById('kk_MaSP_Text').innerText = "Mã SP: " + maSP; document.getElementById('kk_TenSP').innerText = tenSP; document.getElementById('kk_TonHeThong').innerText = tonHeThong;
+            var txtThucTe = document.getElementById('kk_TonThucTe'); txtThucTe.value = tonHeThong;
+            document.getElementById('kk_PhanLoaiLyDo').value = "Khớp số lượng"; document.getElementById('kk_LyDo').value = '';
+            calcChenhLech();
+            new bootstrap.Modal(document.getElementById('kiemKeModal')).show();
+            setTimeout(() => { txtThucTe.focus(); txtThucTe.select(); }, 500);
+        }
+
+        function calcChenhLech() {
+            var heThong = parseInt(document.getElementById('kk_TonHeThong').innerText) || 0;
+            var thucTe = parseInt(document.getElementById('kk_TonThucTe').value);
+            var diff = thucTe - heThong;
+            var alertBox = document.getElementById('kk_AlertBox'); var ddlLyDo = document.getElementById('kk_PhanLoaiLyDo'); var txtLyDo = document.getElementById('kk_LyDo');
+
+            if (isNaN(thucTe)) { alertBox.className = "p-3 rounded text-center bg-secondary bg-opacity-10"; alertBox.innerHTML = `<span class="text-muted fw-bold">Chờ nhập số...</span>`; ddlLyDo.disabled = true; txtLyDo.disabled = true; return; }
+
+            if (diff !== 0) {
+                ddlLyDo.disabled = false; txtLyDo.disabled = false;
+                if(ddlLyDo.value === "Khớp số lượng") ddlLyDo.value = diff < 0 ? "Sai sót sổ sách" : "Lý do khác";
+            } else { ddlLyDo.disabled = true; txtLyDo.disabled = true; ddlLyDo.value = "Khớp số lượng"; }
+
+            if (diff > 0) { alertBox.className = "p-3 rounded text-center bg-success bg-opacity-10 border border-success"; alertBox.innerHTML = `<h5 class="text-success fw-bold mb-0">Dư ${diff} cái</h5>`; }
+            else if (diff < 0) { alertBox.className = "p-3 rounded text-center bg-danger bg-opacity-10 border border-danger"; alertBox.innerHTML = `<h5 class="text-danger fw-bold mb-0">Mất ${Math.abs(diff)} cái</h5>`; }
+            else { alertBox.className = "p-3 rounded text-center bg-primary bg-opacity-10 border border-primary"; alertBox.innerHTML = `<h5 class="text-primary fw-bold mb-0">Khớp 100%</h5>`; }
+        }
+
+        function submitKiemKe() {
+            var maSP = document.getElementById('kk_MaSP').value; var thucTe = parseInt(document.getElementById('kk_TonThucTe').value); var heThong = parseInt(document.getElementById('kk_TonHeThong').innerText) || 0;
+            var phanLoai = document.getElementById('kk_PhanLoaiLyDo').value; var lyDoText = document.getElementById('kk_LyDo').value.trim();
+
+            if (isNaN(thucTe) || thucTe < 0) { Swal.fire("Lỗi", "Số lượng sai!", "error"); return; }
+            var finalGhiChu = (thucTe === heThong) ? "Kho thực tế khớp phần mềm" : `[${phanLoai}] ${lyDoText}`;
+            if(thucTe !== heThong && phanLoai === "Khớp số lượng") { Swal.fire("Nhắc nhở", "Cần chọn lý do lệch kho!", "warning"); return; }
+
+            Swal.fire({title: 'Đang lưu sổ...', didOpen: () => Swal.showLoading()});
+            fetch('/Owner/KiemKeKhoAPI', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ MaSP: maSP, TonThucTe: thucTe, GhiChu: finalGhiChu }) })
+            .then(res => res.json()).then(data => {
+                if(data.success) { bootstrap.Modal.getInstance(document.getElementById('kiemKeModal')).hide(); Swal.fire({icon: 'success', title: 'Hoàn tất', timer: 1500, showConfirmButton: false}).then(() => location.reload()); }
+                else { Swal.fire("Lỗi", data.msg, "error"); }
+            });
+        }
+
+        // ============================================================
+        // 6. XEM LỊCH SỬ NHẬP KHO & IN PHIẾU
+        // ============================================================
+        function openImportHistoryModal() {
+            var modal = new bootstrap.Modal(document.getElementById('importHistoryModal')); modal.show();
+            document.getElementById('importDetailArea').innerHTML = `<div class="text-center text-muted mt-5 pt-5"><i class="fas fa-file-invoice fa-5x mb-3 opacity-25"></i><h4 class="fw-bold">LƯU TRỮ CHỨNG TỪ</h4><p>Chọn một phiếu nhập bên trái để xem chi tiết.</p></div>`;
+
+            fetch('/Owner/GetImportHistoryAPI').then(res => res.json()).then(data => {
+                var list = document.getElementById('importList'); list.innerHTML = "";
+                if(data.success && data.data && data.data.length > 0) {
+                    data.data.forEach(pn => {
+                        var ma = pn.maPN || pn.MaPN || ""; var tt = pn.tongTien || pn.TongTien || 0; var date = pn.ngayNhap || pn.NgayNhap || "";
+                        list.innerHTML += `<button class="list-group-item list-group-item-action p-3 border-bottom border-0 border-bottom text-start" onclick="viewImportDetails('${ma}', ${tt}, '${date}')"><div class="d-flex justify-content-between align-items-center mb-1"><strong class="text-primary fs-6"><i class="fas fa-box-open me-2 text-warning"></i>${ma}</strong><span class="badge bg-success rounded-pill px-2 py-1 fs-6">${tt.toLocaleString()} ₫</span></div><div class="d-flex justify-content-between align-items-center mt-2"><small class="text-muted fw-bold"><i class="far fa-clock me-1"></i> ${date}</small><small class="text-info fw-bold"><i class="fas fa-check-circle me-1"></i>Hoàn tất</small></div></button>`;
+                    });
+                } else { list.innerHTML = `<div class="p-5 text-center text-muted">Chưa có dữ liệu nhập kho!</div>`; }
+            }).catch(() => document.getElementById('importList').innerHTML = `<div class="text-danger p-4 text-center fw-bold">Lỗi kết nối dữ liệu</div>`);
+        }
+
+        function viewImportDetails(maPN, tongTien, ngayNhap) {
+            var area = document.getElementById('importDetailArea');
+            area.innerHTML = `<div class="text-center mt-5 pt-5"><div class="spinner-grow text-success" style="width: 3rem; height: 3rem;"></div><h5 class="mt-3 text-success fw-bold">Đang trích xuất chứng từ kho...</h5></div>`;
+
+            fetch('/Owner/GetImportDetailsAPI?maPN=' + maPN).then(res => res.json()).then(data => {
+                if(data.success) {
+                    var ncc = data.nccInfo || {};
+                    var qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(maPN)}`;
+                    var html = `
+                        <div class="bg-white p-4 border rounded shadow-sm" id="print-invoice-area">
+                            <div class="row pb-3 mb-4 border-bottom border-3 border-dark">
+                                <div class="col-sm-7"><h2 class="fw-bold text-uppercase text-dark mb-1">PHIẾU NHẬP KHO</h2><p class="text-muted mb-0">Mã phiếu: <strong>${maPN}</strong></p><p class="text-muted mb-0">Ngày lập: ${ngayNhap}</p></div>
+                                <div class="col-sm-5 text-sm-end mt-3 mt-sm-0"><img src="${qrUrl}" alt="QR" class="border p-1 rounded bg-white shadow-sm" style="width: 80px; height: 80px;"></div>
+                            </div>
+                            <div class="row mb-4 text-dark">
+                                <div class="col-sm-6"><div class="p-3 bg-light rounded border border-secondary h-100 border-start border-4 border-start-primary"><p class="mb-2 small text-primary text-uppercase fw-bold"><i class="fas fa-building me-1"></i> BÊN NHẬN HÀNG (KHO)</p><p class="mb-1 fw-bold fs-6">${globalStoreInfo.Ten || "SMART WAREHOUSE"}</p><p class="mb-0 small"><i class="fas fa-phone-alt me-2 text-muted"></i>Hotline: ${globalStoreInfo.Hotline || "---"}</p></div></div>
+                                <div class="col-sm-6 mt-3 mt-sm-0"><div class="p-3 bg-light rounded border border-secondary h-100 border-start border-4 border-start-warning"><p class="mb-2 small text-warning text-uppercase fw-bold" style="color: #d39e00 !important;"><i class="fas fa-truck-moving me-1"></i> BÊN GIAO HÀNG (NCC)</p><p class="mb-1 fw-bold fs-6 text-dark">${ncc.TenNCC || ncc.tenNCC || "Khách lẻ"}</p><p class="mb-0 small"><i class="fas fa-phone-alt me-2 text-muted"></i>Liên hệ: ${ncc.SDT || ncc.sdt || "---"}</p></div></div>
+                            </div>
+                            <table class="table table-bordered table-hover text-center align-middle mb-0">
+                                <thead class="table-dark"><tr><th style="width: 5%">STT</th><th class="text-start">Hàng Hóa</th><th style="width: 10%">ĐVT</th><th style="width: 10%">SL</th><th style="width: 15%">Đơn giá nhập</th><th class="text-end pe-3" style="width: 20%">Thành tiền</th></tr></thead>
+                                <tbody>`;
+                    var stt = 1;
+                    data.data.forEach(c => {
+                        var mSP = c.maSP || c.MaSP; var tSP = c.tenSP || c.TenSP; var sl = c.soLuong || c.SoLuong; var dgn = c.donGiaNhap || c.DonGiaNhap || 0; var tt = c.thanhTien || c.ThanhTien || 0; var dvt = c.donViTinh || c.DonViTinh || "Cái";
+                        html += `<tr><td class="text-muted fw-bold">${stt++}</td><td class="text-start"><div class="fw-bold text-dark fs-6">${tSP}</div><div class="small text-secondary mt-1">Mã: ${mSP}</div></td><td class="fw-bold text-muted">${dvt}</td><td class="fw-bold fs-6 text-primary">${sl}</td><td>${dgn.toLocaleString()} ₫</td><td class="text-danger fw-bold pe-3">${tt.toLocaleString()} ₫</td></tr>`;
+                    });
+                    html += `
+                                </tbody>
+                            </table>
+                            <div class="row justify-content-end mt-3"><div class="col-sm-7 col-md-6"><div class="p-3 bg-light border border-secondary rounded shadow-sm"><div class="d-flex justify-content-between align-items-center mb-2"><span class="text-muted fw-bold">Tổng số lượng thực nhập:</span><span class="text-dark fs-5 fw-bold">${data.data.reduce((sum, item) => sum + (item.soLuong || item.SoLuong), 0)}</span></div><div class="d-flex justify-content-between align-items-center border-top border-dark pt-2 mt-2"><span class="fw-bold fs-5 text-dark">TỔNG TIỀN THANH TOÁN:</span><span class="fw-bold text-success fs-4">${tongTien.toLocaleString()} ₫</span></div></div></div></div>
+                        </div>
+                        <div class="text-end mt-4"><button class="btn btn-outline-secondary px-4 fw-bold shadow-sm me-2" data-bs-dismiss="modal">Đóng</button><button class="btn btn-success px-5 fw-bold shadow-sm" onclick="window.print()"><i class="fas fa-print me-2"></i> IN PHIẾU NHẬP</button></div>`;
+                    area.innerHTML = html;
+                } else { area.innerHTML = `<div class="text-danger p-5 text-center fw-bold">Lỗi: ${data.msg}</div>`; }
+            }).catch(() => area.innerHTML = `<div class="text-center mt-5 text-danger fw-bold">Lỗi mạng! Không thể kết nối.</div>`);
+        }
+    </script>
+</body>
+</html>

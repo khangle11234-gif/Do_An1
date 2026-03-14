@@ -121,5 +121,100 @@ namespace Presentation.Controllers
                 return Json(new { success = false, msg = "Lỗi C#: " + (ex.InnerException?.Message ?? ex.Message) });
             }
         }
+        // =========================================================
+        // 3. API XEM LỊCH SỬ HÓA ĐƠN (Dành cho Nhân viên)
+        // =========================================================
+        [HttpGet]
+        public IActionResult GetInvoicesAPI()
+        {
+            try
+            {
+                // Chỉ lấy 50 hóa đơn gần nhất để nhân viên xem cho nhẹ máy
+                var maHDs = _context.HoaDon
+                                    .OrderByDescending(h => h.MaHD)
+                                    .Select(h => h.MaHD)
+                                    .Take(50)
+                                    .ToList();
+
+                var chiTiets = _context.CT_HoaDon.Where(c => maHDs.Contains(c.MaHD)).ToList();
+
+                var result = maHDs.Select(ma => new
+                {
+                    MaHD = ma,
+                    // Dùng ?? 0 để nếu hóa đơn cũ bị Null số lượng/giá thì tự tính là 0đ
+                    TongTien = chiTiets.Where(c => c.MaHD == ma).Sum(c => (c.SoLuong ?? 0) * (c.GiaBanThucTe ?? 0)),
+                    // Cắt mã hóa đơn để lấy ngày (Mã HD có dạng HD240315103045)
+                    NgayTao = ma.Length >= 14 ? $"20{ma.Substring(2, 2)}-{ma.Substring(4, 2)}-{ma.Substring(6, 2)}" : "Hóa đơn cũ"
+                }).ToList();
+
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, msg = "Lỗi C#: " + ex.Message });
+            }
+        }
+
+        // =========================================================
+        // 4. API XEM CHI TIẾT HÓA ĐƠN (Dành cho Nhân viên)
+        // =========================================================
+        [HttpGet]
+        public IActionResult GetInvoiceDetailsAPI(string maHD)
+        {
+            try
+            {
+                var details = _context.CT_HoaDon.Where(c => c.MaHD == maHD).ToList();
+                var spList = _context.SanPham.ToList();
+
+                var result = details.Select(c => new
+                {
+                    // Cắt khoảng trắng cho mã SP hiển thị đẹp
+                    MaSP = c.MaSP != null ? c.MaSP.Trim() : "Không có mã",
+
+                    // Tìm tên SP từ bảng SP dựa vào mã
+                    TenSP = spList.FirstOrDefault(s => s.MaSP.Trim() == (c.MaSP ?? "").Trim())?.TenSP ?? "SP không xác định",
+
+                    SoLuong = c.SoLuong ?? 0,
+                    GiaBan = c.GiaBanThucTe ?? 0,
+                    ThanhTien = (c.SoLuong ?? 0) * (c.GiaBanThucTe ?? 0)
+                }).ToList();
+
+                return Json(new { success = true, data = result });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, msg = "Lỗi C#: " + ex.Message });
+            }
+        }
+
+        // =========================================================
+        // 5. [API] LẤY THÔNG TIN DOANH NGHIỆP CHO HÓA ĐƠN (IN ẤN)
+        // =========================================================
+        [HttpGet]
+        public IActionResult GetStoreInfoAPI()
+        {
+            try
+            {
+                var store = _context.ThongTinCongTy.Select(c => new
+                {
+                    Ten = c.TenCongTy ?? "SMART WAREHOUSE",
+                    DiaChi = c.DiaChi ?? "Chưa cập nhật địa chỉ",
+                    Hotline = c.SoDienThoai ?? "Chưa cập nhật số điện thoại",
+                    MST = c.MaSoThue ?? "Chưa cập nhật MST"
+                }).FirstOrDefault();
+
+                if (store != null)
+                {
+                    return Json(new { success = true, data = store });
+                }
+
+                // Backup nếu Database trống
+                return Json(new { success = true, data = new { Ten = "SMART WAREHOUSE", DiaChi = "Chi nhánh chính", Hotline = "---", MST = "---" } });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, msg = "Lỗi C#: " + ex.Message });
+            }
+        }
     }
 }

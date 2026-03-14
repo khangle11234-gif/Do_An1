@@ -2051,46 +2051,63 @@
         }
 
         var searchInput = document.getElementById("searchProduct");
-           var searchRes = document.getElementById("searchResults");
-           if(searchInput && searchRes){
-               function performSearch() {
-                   var k = searchInput.value.toLowerCase(); searchRes.innerHTML = "";
-                   var sourceData = [...allProducts].reverse();
+          var searchRes = document.getElementById("searchResults");
+          if(searchInput && searchRes){
+              function performSearch() {
+                  var k = searchInput.value.toLowerCase();
+                  searchRes.innerHTML = "";
 
-                   // [FIX LỖI CHỮ HOA/THƯỜNG]
-                   var matches = k.length < 1 ? sourceData : sourceData.filter(p => {
-                       var ten = (p.TenSP || p.tenSP || "").toLowerCase();
-                       var ma = (p.MaSP || p.maSP || "").toLowerCase();
-                       return ten.includes(k) || ma.includes(k);
-                   });
+                  // 1. ĐÃ BỎ LỆNH .reverse() ĐỂ SẢN PHẨM MỚI VỪA TẠO SẼ NẰM NGAY TRÊN CÙNG
+                  var sourceData = [...allProducts];
 
-                   if(matches.length > 0) {
-                       searchRes.style.display = "block";
-                       matches.slice(0, 6).forEach(p => {
-                           var ten = p.TenSP || p.tenSP || "Không tên";
-                           var ma = p.MaSP || p.maSP || "---";
-                           var gia = p.GiaNhap || p.giaNhap || 0; // [FIX LỖI NULL GIÁ]
+                  var matches = k.length < 1 ? sourceData : sourceData.filter(p => {
+                      var ten = (p.TenSP || p.tenSP || "").toLowerCase();
+                      var ma = (p.MaSP || p.maSP || "").toLowerCase();
+                      return ten.includes(k) || ma.includes(k);
+                  });
 
-                           var item = document.createElement("a");
-                           item.className = "list-group-item list-group-item-action cursor-pointer bg-white";
-                           item.innerHTML = `<div class="d-flex justify-content-between align-items-center"><div><div class="fw-bold text-primary">${ten}</div><small class="text-muted">${ma}</small></div><span class="badge bg-light text-dark border">${gia.toLocaleString('vi-VN')} đ</span></div>`;
-                           item.onclick = function() {
-                               addToCart(p);
-                               searchInput.value = "";
-                               searchRes.style.display = "none";
-                               return false;
-                           };
-                           searchRes.appendChild(item);
-                       });
-                   } else {
-                       if(k.length > 0) searchRes.style.display = "none";
-                   }
-               }
-               searchInput.addEventListener("input", performSearch);
-               searchInput.addEventListener("focus", performSearch);
-               document.addEventListener("click", function(e) { if (e.target !== searchInput && e.target.parentNode !== searchRes) { searchRes.style.display = "none"; } });
-           }
+                  if(matches.length > 0) {
+                      searchRes.style.display = "block";
+                      matches.slice(0, 6).forEach(p => {
+                          var ten = p.TenSP || p.tenSP || "Không tên";
+                          var ma = p.MaSP || p.maSP || "---";
 
+                          // 2. CẬP NHẬT HIỂN THỊ TỒN KHO THỜI GIAN THỰC TỪ BỘ NHỚ (RAM)
+                          var ton = p.SoLuongTon || p.soLuongTon || 0;
+
+                          var item = document.createElement("a");
+                          item.className = "list-group-item list-group-item-action cursor-pointer bg-white border-bottom";
+                          item.innerHTML = `
+                              <div class="d-flex justify-content-between align-items-center">
+                                  <div>
+                                      <div class="fw-bold text-primary">${ten}</div>
+                                      <small class="text-muted"><i class="fas fa-barcode me-1"></i>${ma}</small>
+                                  </div>
+                                  <span class="badge bg-success bg-opacity-10 text-success border border-success fs-6 shadow-sm">
+                                      <i class="fas fa-box me-1"></i>Tồn: ${ton}
+                                  </span>
+                              </div>`;
+
+                          item.onclick = function() {
+                              addToCart(p);
+                              searchInput.value = "";
+                              searchRes.style.display = "none";
+                              return false;
+                          };
+                          searchRes.appendChild(item);
+                      });
+                  } else {
+                      searchRes.style.display = "none";
+                  }
+              }
+              searchInput.addEventListener("input", performSearch);
+              searchInput.addEventListener("focus", performSearch); // Bấm vào ô là hiện danh sách ngay
+              document.addEventListener("click", function(e) {
+                  if (e.target !== searchInput && e.target.parentNode !== searchRes) {
+                      searchRes.style.display = "none";
+                  }
+              });
+          }
            // [FIX LỖI KHÔNG RỚT XUỐNG GIỎ HÀNG]
            function addToCart(p) {
                var ma = p.MaSP || p.maSP;
@@ -2159,33 +2176,61 @@
                renderCart();
            };
 
-        function submitPhieuNhap() {
-               var ncc = document.getElementById("MaNCC").value;
-               if(!ncc) { Swal.fire("Lỗi", "Vui lòng chọn Nhà Cung Cấp!", "error"); return; }
-               if(importCart.length === 0) { Swal.fire("Lỗi", "Giỏ hàng trống!", "error"); return; }
+        // ==========================================================
+              // Hàm Lưu Phiếu Nhập Kho (FIX LỖI KHÔNG HIỆN LÊN MÁY POS)
+              // ==========================================================
+              function submitPhieuNhap() {
+                  var ncc = document.getElementById("MaNCC").value;
+                  if(!ncc) { Swal.fire("Lỗi", "Vui lòng chọn Nhà Cung Cấp!", "error"); return; }
+                  if(importCart.length === 0) { Swal.fire("Lỗi", "Giỏ hàng trống!", "error"); return; }
 
-               Swal.fire({title: 'Đang chốt sổ kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
+                  Swal.fire({title: 'Đang chốt sổ kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading()});
 
-               fetch('/Owner/SavePhieuNhap', {
-                   method: 'POST', headers: { 'Content-Type': 'application/json' },
-                   body: JSON.stringify({ MaNCC: ncc, NgayNhap: document.getElementById("NgayNhap").value, GhiChu: document.getElementById("GhiChu").value, ChiTiet: importCart })
-               }).then(res => res.json()).then(data => {
-                   if(data.success) {
-                       // 1. Dọn dẹp bàn làm việc sau khi nhập xong
-                       importCart = [];
-                       renderCart();
-                       document.getElementById("GhiChu").value = "";
-                       document.getElementById("MaNCC").value = "";
+                  fetch('/Owner/SavePhieuNhap', {
+                      method: 'POST', headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ MaNCC: ncc, NgayNhap: document.getElementById("NgayNhap").value, GhiChu: document.getElementById("GhiChu").value, ChiTiet: importCart })
+                  }).then(res => res.json()).then(data => {
+                      if(data.success) {
+                          // -------------------------------------------------------------
+                          // 1. CẬP NHẬT TỒN KHO THỜI GIAN THỰC CHO MÁY POS KHÔNG CẦN F5
+                          // -------------------------------------------------------------
+                          importCart.forEach(item => {
+                              // Tìm sản phẩm vừa nhập trong bộ nhớ
+                              var p = allProducts.find(x => x.MaSP === item.MaSP || x.maSP === item.MaSP);
+                              if (p) {
+                                  // Cộng dồn số lượng tồn kho
+                                  p.SoLuongTon = (p.SoLuongTon || 0) + parseInt(item.SoLuong);
+                                  p.TrangThai = true; // Bật luôn trạng thái đang bán cho chắc
+                              }
+                          });
 
-                       // 2. Báo thành công và TỰ ĐỘNG MỞ LỊCH SỬ
-                       Swal.fire({icon: "success", title: "Nhập Kho Thành Công", text: "Hệ thống đã cập nhật tồn kho!", timer: 1500, showConfirmButton: false})
-                       .then(() => {
-                           openImportHistoryModal(); // Bật popup lịch sử lên luôn
-                       });
-                   }
-                   else { Swal.fire("Lỗi", data.msg, "error"); }
-               }).catch(() => Swal.fire("Lỗi", "Mất kết nối máy chủ", "error"));
-           }
+                          // Ra lệnh cho máy POS vẽ lại các mặt hàng ngay lập tức
+                          if (typeof renderPosProducts === 'function') {
+                              renderPosProducts();
+                          }
+                          // -------------------------------------------------------------
+
+                          // 2. Dọn dẹp bàn làm việc sau khi nhập xong
+                          importCart = [];
+                          renderCart();
+                          document.getElementById("GhiChu").value = "";
+                          document.getElementById("MaNCC").value = "";
+
+                          // 3. Báo thành công và TỰ ĐỘNG MỞ LỊCH SỬ
+                          Swal.fire({
+                              icon: "success",
+                              title: "Nhập Kho Thành Công",
+                              text: "Hàng đã được đưa thẳng ra quầy POS!",
+                              timer: 2000,
+                              showConfirmButton: false
+                          })
+                          .then(() => {
+                              openImportHistoryModal(); // Bật popup lịch sử lên
+                          });
+                      }
+                      else { Swal.fire("Lỗi", data.msg, "error"); }
+                  }).catch(() => Swal.fire("Lỗi", "Mất kết nối máy chủ", "error"));
+              }
 
         var html5QrcodeScanner = null;
         function openScannerModal() {
@@ -2401,60 +2446,100 @@
               }
           }
 
-          // 5. Lưu sản phẩm mới lên Server và đưa thẳng vào Giỏ Hàng
-        // 5. Lưu sản phẩm mới lên Server và đưa thẳng vào Giỏ Hàng
         // ==========================================================
-           // Hàm Lưu Sản Phẩm Mới (Có Ảnh, Thông số, Bảo hành)
-           // ==========================================================
-           function saveNewProductERP() {
-               var ma = document.getElementById('new_MaSP').value;
-               var ten = document.getElementById('new_TenSP').value;
+         // Hàm Khai báo Hàng mới (CHỐNG RESET TRANG & RỚT THẲNG VÀO GIỎ)
+         // ==========================================================
+         function saveNewProductERP() {
+             var ma = document.getElementById('new_MaSP').value;
+             var ten = document.getElementById('new_TenSP').value;
 
-               if(!ma || !ten) {
-                   Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm hàng và Tên để sinh mã!", "warning");
-                   return;
-               }
+             if(!ma || !ten) {
+                 Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm hàng và Tên để sinh mã!", "warning");
+                 return;
+             }
 
-               var formData = new FormData();
-               formData.append("MaSP", ma);
-               formData.append("TenSP", ten);
-               formData.append("MaVach", document.getElementById('new_MaVach').value);
-               formData.append("DonViTinh", document.getElementById('new_DVT').value);
-               formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
-               formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value); // Chống lỗi NULL
-               formData.append("GiaBan", document.getElementById('new_GiaBan').value);
-               formData.append("TrangThai", true);
+             var formData = new FormData();
+             formData.append("MaSP", ma);
+             formData.append("TenSP", ten);
+             formData.append("MaVach", document.getElementById('new_MaVach').value);
+             formData.append("DonViTinh", document.getElementById('new_DVT').value);
+             formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
+             formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value);
+             formData.append("GiaBan", document.getElementById('new_GiaBan').value);
+             formData.append("TrangThai", true);
+             formData.append("ThongSoChiTiet", document.getElementById('new_ThongSo').value);
+             formData.append("ThoiGianBaoHanh", document.getElementById('new_BaoHanh').value);
 
-               // 2 TRƯỜNG MỚI THÊM VÀO:
-               formData.append("ThongSoChiTiet", document.getElementById('new_ThongSo').value);
-               formData.append("ThoiGianBaoHanh", document.getElementById('new_BaoHanh').value);
+             var fileInput = document.getElementById('new_FileAnh');
+             if (fileInput && fileInput.files.length > 0) {
+                 formData.append("fileAnh", fileInput.files[0]);
+             }
 
-               // Xử lý file ảnh
-               var fileInput = document.getElementById('new_FileAnh');
-               if (fileInput && fileInput.files.length > 0) {
-                   formData.append("fileAnh", fileInput.files[0]);
-               }
+             Swal.fire({ title: 'Đang đẩy vào kho...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
-               Swal.fire({ title: 'Đang đẩy lên mây...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+             fetch('/Owner/CreateProductWithImageAPI', {
+                 method: 'POST',
+                 body: formData
+             })
+             .then(res => res.json())
+             .then(res => {
+                 if(res.success) {
+                     Swal.close();
 
-               fetch('/Owner/CreateProductWithImageAPI', {
-                   method: 'POST',
-                   body: formData
-               })
-               .then(res => res.json())
-               .then(res => {
-                   Swal.close();
-                   if(res.success) {
-                       Swal.fire("Thành công", res.msg, "success").then(() => location.reload());
-                   } else {
-                       Swal.fire("Lỗi SQL", res.msg, "error");
-                   }
-               })
-               .catch(err => {
-                   Swal.close();
-                   Swal.fire("Lỗi", "Không thể kết nối máy chủ!", "error");
-               });
-           }
+                     // 1. TẠO SP ẢO & BỎ NGAY VÀO GIỎ HÀNG (Làm trước để tránh lỗi UI)
+                     var newProd = {
+                         MaSP: ma,
+                         TenSP: ten,
+                         MaVach: document.getElementById('new_MaVach').value,
+                         DonViTinh: document.getElementById('new_DVT').value || "Cái",
+                         GiaNhap: parseFloat(document.getElementById('new_GiaNhap').value) || 0,
+                         GiaBan: parseFloat(document.getElementById('new_GiaBan').value) || 0,
+                         SoLuongTon: 0,
+                         TrangThai: true
+                     };
+
+                     // Cập nhật vào trí nhớ tạm của trình duyệt
+                     allProducts.unshift(newProd);
+
+                     // GỌI THẲNG HÀM NÉM VÀO GIỎ (Sản phẩm sẽ hiện ra ngay lập tức)
+                     addToCart(newProd);
+
+                     // 2. DỌN SẠCH FORM ĐỂ LẦN SAU BẤM VÀO LÀ TRỐNG TRƠN
+                     document.getElementById('new_MaSP').value = '';
+                     document.getElementById('new_TenSP').value = '';
+                     document.getElementById('new_MaVach').value = '';
+                     document.getElementById('new_SoLo').value = '';
+                     document.getElementById('new_ThongSo').value = '';
+                     document.getElementById('new_BaoHanh').value = '0';
+                     document.getElementById('new_GiaNhap').value = '0';
+                     document.getElementById('new_GiaBan').value = '0';
+                     if(document.getElementById('img_preview')) {
+                         document.getElementById('img_preview').src = "https://via.placeholder.com/100x100?text=No+Image";
+                     }
+
+                     // 3. ĐÓNG MODAL AN TOÀN
+                     var modalEl = document.getElementById('modalAddProduct');
+                     if(modalEl) {
+                         var modalObj = bootstrap.Modal.getInstance(modalEl);
+                         if(modalObj) modalObj.hide();
+                     }
+
+                     // 4. BÁO THÀNH CÔNG NHỎ TRÊN GÓC MÀN HÌNH
+                     Swal.fire({
+                         toast: true, position: 'top-end', icon: 'success',
+                         title: 'Đã lưu! Hãy nhập số lượng.',
+                         showConfirmButton: false, timer: 3000
+                     });
+
+                 } else {
+                     Swal.fire("Lỗi Database", res.msg, "error");
+                 }
+             })
+             .catch(err => {
+                 Swal.close();
+                 Swal.fire("Lỗi Mạng", "Không thể kết nối máy chủ!", "error");
+             });
+         }
         function openAddModal() {
             document.getElementById('userForm').reset();
             document.getElementById('modal_MaND').value = '';
@@ -2724,7 +2809,7 @@
                                            <p class="mb-0 small"><i class="fas fa-phone-alt me-2 text-muted"></i>Hotline: ${globalStoreInfo.hotline || "---"}</p>
                                        </div>
                                    </div>
-                                         // ĐÃ SỬA: KIỂM TRA NCC CÓ NULL HAY KHÔNG
+                                         
         <div class="col-sm-6 mt-3 mt-sm-0">
             <div class="p-3 bg-light rounded border border-secondary h-100 border-start border-4 border-start-warning">
                 <p class="mb-2 small text-warning text-uppercase fw-bold" style="color: #d39e00 !important;"><i class="fas fa-truck-moving me-1"></i> BÊN GIAO HÀNG (NCC)</p>
@@ -3068,52 +3153,7 @@
         }
 
         // B. Hàm Lưu sản phẩm mới (Đã sửa để gửi được FILE ảnh qua C#)
-        function saveNewProductERP() {
-            var ma = document.getElementById('new_MaSP').value;
-            var ten = document.getElementById('new_TenSP').value;
-
-            if(!ma || !ten) {
-                Swal.fire("Thiếu thông tin", "Vui lòng nhập Nhóm hàng và Tên để sinh mã!", "warning");
-                return;
-            }
-
-            // [QUAN TRỌNG]: Dùng FormData để đóng gói cả chữ và FILE
-            var formData = new FormData();
-            formData.append("MaSP", ma);
-            formData.append("TenSP", ten);
-            formData.append("MaVach", document.getElementById('new_MaVach').value);
-            formData.append("DonViTinh", document.getElementById('new_DVT').value);
-            formData.append("GiaNhap", document.getElementById('new_GiaNhap').value);
-            formData.append("DonGiaNhap", document.getElementById('new_GiaNhap').value);
-            formData.append("GiaBan", document.getElementById('new_GiaBan').value);
-            formData.append("TrangThai", true);
-
-            // Lấy file từ ô input
-            var fileInput = document.getElementById('new_FileAnh');
-            if (fileInput.files.length > 0) {
-                formData.append("fileAnh", fileInput.files[0]);
-            }
-
-            Swal.fire({ title: 'Đang đẩy lên mây...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-
-            fetch('/Owner/CreateProductWithImageAPI', {
-                method: 'POST',
-                body: formData // KHÔNG dùng JSON.stringify, gửi trực tiếp formData
-            })
-            .then(res => res.json())
-            .then(res => {
-                Swal.close();
-                if(res.success) {
-                    Swal.fire("Thành công", res.msg, "success").then(() => location.reload());
-                } else {
-                    Swal.fire("Lỗi", res.msg, "error");
-                }
-            })
-            .catch(err => {
-                Swal.close();
-                Swal.fire("Lỗi", "Không thể kết nối máy chủ!", "error");
-            });
-        }
+     
     </script>
 </body>
 </html>
