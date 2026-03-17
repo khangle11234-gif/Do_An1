@@ -204,9 +204,12 @@
         </div>
 
         <div class="sidebar-footer">
-            <div class="d-flex align-items-center mb-3">
-                <div class="bg-warning text-dark rounded-circle d-flex align-items-center justify-content-center me-2 fw-bold" style="width: 40px; height: 40px;"><i class="fas fa-hard-hat"></i></div>
-                <div><div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div><small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Đang trực kho</small></div>
+            <div class="d-flex align-items-center mb-3 p-2 rounded table-hover" data-bs-toggle="modal" data-bs-target="#modalProfile" style="cursor: pointer; transition: 0.3s;" title="Click để Đổi mật khẩu">
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2 shadow-sm" style="width: 40px; height: 40px;"><i class="fas fa-user-tie"></i></div>
+                <div>
+                    <div class="fw-bold text-dark">@Context.Session.GetString("HoTen")</div>
+                    <small class="text-success"><i class="fas fa-circle" style="font-size: 8px;"></i> Online</small>
+                </div>
             </div>
             <a href="/Home/Logout" class="btn btn-outline-danger w-100 btn-sm"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a>
         </div>
@@ -526,6 +529,81 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="modalProfile" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title fw-bold"><i class="fas fa-user-shield me-2"></i>Hồ Sơ & Đổi Mật Khẩu</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <div class="mb-4 pb-3 border-bottom text-center">
+                        <div class="bg-light text-primary rounded-circle d-inline-flex align-items-center justify-content-center shadow-sm mb-2" style="width: 60px; height: 60px; font-size: 24px;">
+                            <i class="fas fa-user-tie"></i>
+                        </div>
+                        <h5 class="fw-bold text-dark mb-0">@Context.Session.GetString("HoTen")</h5>
+                        <span class="badge bg-primary bg-opacity-10 text-primary border border-primary mt-2 px-3 py-1">Vai trò: @Context.Session.GetString("VaiTro")</span>
+                    </div>
+
+                    <h6 class="fw-bold text-danger mb-3"><i class="fas fa-key me-2"></i>Đổi mật khẩu bảo mật</h6>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                        <input type="password" id="txtMatKhauCu" class="form-control bg-light" placeholder="Nhập mật khẩu đang dùng...">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">Mật khẩu mới <span class="text-danger">*</span></label>
+                        <input type="password" id="txtMatKhauMoi" class="form-control border-primary" placeholder="Nhập mật khẩu mới...">
+                    </div>
+                    <div class="mb-0">
+                        <label class="form-label text-muted small fw-bold">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                        <input type="password" id="txtXacNhanMatKhau" class="form-control border-primary" placeholder="Nhập lại mật khẩu mới...">
+                    </div>
+                </div>
+                <div class="modal-footer bg-light border-0">
+                    <button type="button" class="btn btn-secondary px-4 fw-bold" data-bs-dismiss="modal">Đóng</button>
+                    <button type="button" class="btn btn-primary px-4 fw-bold shadow-sm" onclick="submitChangePassword()"><i class="fas fa-save me-2"></i>Lưu Mật Khẩu</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitChangePassword() {
+            var mkCu = document.getElementById('txtMatKhauCu').value;
+            var mkMoi = document.getElementById('txtMatKhauMoi').value;
+            var mkXacNhan = document.getElementById('txtXacNhanMatKhau').value;
+
+            if (!mkCu || !mkMoi || !mkXacNhan) {
+                Swal.fire('Thiếu thông tin', 'Vui lòng nhập đầy đủ các ô mật khẩu!', 'warning');
+                return;
+            }
+            if (mkMoi !== mkXacNhan) {
+                Swal.fire('Lỗi xác minh', 'Mật khẩu xác nhận không khớp!', 'error');
+                return;
+            }
+
+            Swal.fire({ title: 'Đang xử lý...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            var formData = new FormData();
+            formData.append("matKhauCu", mkCu);
+            formData.append("matKhauMoi", mkMoi);
+
+            fetch('/Home/ChangePassword', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire('Thành công!', data.msg, 'success').then(() => {
+                        bootstrap.Modal.getInstance(document.getElementById('modalProfile')).hide();
+                        document.getElementById('txtMatKhauCu').value = "";
+                        document.getElementById('txtMatKhauMoi').value = "";
+                        document.getElementById('txtXacNhanMatKhau').value = "";
+                    });
+                } else {
+                    Swal.fire('Lỗi!', data.msg, 'error');
+                }
+            });
+        }
+    </script>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

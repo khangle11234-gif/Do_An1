@@ -186,6 +186,49 @@ namespace Presentation.Controllers
         }
 
         // ============================================================
+        // 4. XỬ LÝ ĐỔI MẬT KHẨU TỪ GIAO DIỆN MODAL (ĐÃ THÊM MỚI)
+        // ============================================================
+        [HttpPost]
+        public IActionResult ChangePassword(string matKhauCu, string matKhauMoi)
+        {
+            try
+            {
+                // Lấy Mã Người Dùng đang đăng nhập từ Session (Lưu dưới dạng chuỗi)
+                var maND = HttpContext.Session.GetString("MaND");
+
+                if (string.IsNullOrEmpty(maND))
+                {
+                    return Json(new { success = false, msg = "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!" });
+                }
+
+                // Tìm tài khoản trong CSDL
+                var user = _context.NguoiDung.FirstOrDefault(u => u.MaND == maND);
+
+                if (user == null)
+                {
+                    return Json(new { success = false, msg = "Không tìm thấy tài khoản trong hệ thống!" });
+                }
+
+                // Kiểm tra mật khẩu cũ
+                if (user.MatKhau != matKhauCu)
+                {
+                    return Json(new { success = false, msg = "Mật khẩu hiện tại không chính xác!" });
+                }
+
+                // Cập nhật mật khẩu mới và lưu lại
+                user.MatKhau = matKhauMoi;
+                _context.NguoiDung.Update(user);
+                _context.SaveChanges();
+
+                return Json(new { success = true, msg = "Đổi mật khẩu thành công! Vui lòng ghi nhớ mật khẩu mới." });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, msg = "Có lỗi xảy ra: " + ex.Message });
+            }
+        }
+
+        // ============================================================
         // [ĐÃ SỬA CHUẨN] ĐIỀU HƯỚNG PHÂN QUYỀN ĐĂNG NHẬP (AUTO-ROUTING)
         // ============================================================
         private IActionResult RedirectBasedOnRole(string role)
@@ -207,6 +250,5 @@ namespace Presentation.Controllers
         }
 
         public IActionResult Dashboard() => View();
-
     }
 }
